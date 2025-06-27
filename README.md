@@ -14,13 +14,39 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-FF6B35?style=for-the-badge)](https://www.gnu.org/licenses/agpl-3.0)
 [![Made with ❤️](https://img.shields.io/badge/Made%20with-❤️-FF1744?style=for-the-badge)](https://lusansapkota.com.np)
 
+[![GitHub Stars](https://img.shields.io/github/stars/lusansapkota/Face-Recognition-Based-Attendance-System?style=for-the-badge&color=gold)](https://github.com/lusansapkota/Face-Recognition-Based-Attendance-System/stargazers)
+[![GitHub Issues](https://img.shields.io/github/issues/lusansapkota/Face-Recognition-Based-Attendance-System?style=for-the-badge&color=orange)](https://github.com/lusansapkota/Face-Recognition-Based-Attendance-System/issues)
+[![GitHub Forks](https://img.shields.io/github/forks/lusansapkota/Face-Recognition-Based-Attendance-System?style=for-the-badge&color=blue)](https://github.com/lusansapkota/Face-Recognition-Based-Attendance-System/network)
+
 ---
 
 ### 🌟 *Revolutionizing attendance tracking through cutting-edge AI and computer vision*
 
 *Built entirely from scratch with passion, precision, and the latest machine learning technologies*
 
+🌐 **Live Demo**: *Ready to be self-hosted by startups and schools. Contact me to share your self-hosting experience!*
+
 </div>
+
+## 📚 Table of Contents
+
+- [✨ Why RecognizeMe?](#-why-recognizeme)
+- [🧠 AI-Powered Features](#-ai-powered-features)
+- [🤖 AI Technology Stack](#-ai-technology-stack)
+- [📋 Prerequisites](#-prerequisites)
+- [🚀 Installation & Setup](#-installation--setup)
+- [📱 Usage](#-usage)
+- [🎨 Demo & Showcase](#-demo--showcase)
+- [🔧 AI Configuration](#-ai-configuration)
+- [🚀 Deployment](#-deployment)
+- [🤝 Contributing](#-contributing)
+- [📝 License](#-license)
+- [👨‍💻 Author](#-author)
+- [📞 Support & Contact](#-support--contact)
+- [🙏 Acknowledgments](#-acknowledgments)
+- [🚀 AI Development Roadmap](#-ai-development-roadmap)
+
+---
 
 **RecognizeMe** is an intelligent, machine learning-powered attendance management system that leverages cutting-edge computer vision and deep learning algorithms to automate attendance tracking through advanced facial recognition technology. Designed and built entirely from the ground up with modern AI frameworks and neural network architectures for maximum accuracy and performance.
 
@@ -95,6 +121,8 @@ Before running this application, make sure you have:
 - **pip** (Python package manager)
 - **Camera/Webcam** (for face capture and recognition)
 
+> 🏁 **For Small Startups and Schools**: RecognizeMe is designed to be self-hosted with ease. Deploy it on your infrastructure and own your data.
+
 ## 🚀 Installation & Setup
 
 ### 1. Clone the Repository
@@ -139,6 +167,8 @@ SECRET_KEY=your-secret-key-here
 ADMIN_PASSWORD=admin123
 ```
 
+> ⚠️ **Security Warning**: Never commit `.env` files or sensitive keys to version control. Add `.env` to your `.gitignore` file!
+
 #### Run the backend server
 
 ```bash
@@ -174,9 +204,11 @@ The frontend will start on `http://localhost:5173`
 ### 🔑 Default Login Credentials
 
 #### Admin Access
+
 - **Password**: `admin123` (or as set in .env file - backend (do not expose in frontend))
 
 #### User Access
+
 - Users need to be registered by admin first
 - Login with username/password provided during registration
 
@@ -211,17 +243,17 @@ The frontend will start on `http://localhost:5173`
 
 ### 🎥 Video Demonstrations
 
-**Coming Soon!** 🚀
+**Comprehensive Tutorial Series Coming Soon!** 🚀
 
-Preparing comprehensive video tutorials showcasing:
+Get ready for an exciting collection of in-depth tutorials that will walk you through everything from initial setup to advanced AI insights:
 
-- 🎯 AI facial recognition in action
-- 📊 Real-time attendance tracking  
-- 🧠 Machine learning model training
-- 📈 Advanced analytics dashboard
-- ⚙️ Admin panel features
+- 🎯 **AI Facial Recognition in Action** - See the magic happen in real-time
+- 📊 **Real-time Attendance Tracking** - From detection to database updates
+- 🧠 **Machine Learning Model Training** - Behind-the-scenes AI processes
+- 📈 **Advanced Analytics Dashboard** - Unlock powerful insights from your data
+- ⚙️ **Complete Admin Panel Tour** - Master every feature and setting
 
-*Stay tuned for exciting demos of RecognizeMe's intelligent capabilities!*
+*Stay tuned for these exciting demos showcasing RecognizeMe's intelligent capabilities!*
 
 ## 🔧 AI Configuration
 
@@ -242,9 +274,9 @@ Preparing comprehensive video tutorials showcasing:
 ### Database & ML Storage
 
 - SQLite database for development and ML model storage
-- Supports migration to PostgreSQL/MySQL for production
-- Facial embeddings stored securely
-- Model versioning and backup support
+- Easily migratable to PostgreSQL or MySQL for robust production deployments
+- Facial embeddings stored securely with encryption
+- Model versioning and automated backup support
 
 ## 🚀 Deployment
 
@@ -340,12 +372,8 @@ Special thanks to the open-source community and the incredible technologies that
 
 ---
 
-<div align="center">
-
 ### 💫 *Crafted with passion, powered by AI, built for the future*
 
 **Made with ❤️ by [Lusan Sapkota](https://lusansapkota.com.np)**
 
 *"Every line of code tells a story of innovation"*
-
-</div>
