@@ -1,0 +1,11 @@
+opencv-python
+flask
+flask-cors
+flask-jwt-extended
+pandas
+numpy
+scikit-learn
+joblib
+matplotlib
+python-dotenv
+bcrypt
