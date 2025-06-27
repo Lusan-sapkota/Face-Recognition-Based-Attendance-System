@@ -190,7 +190,7 @@ The frontend will start on `http://localhost:5173`
 
 ### 📸 Face Recognition Setup
 
-1. **Register User**: Admin creates user account with basic details
+1. **Register User**: Admin creates user account with basic details (supported user types are student, staff, teacher)
 2. **Capture Faces**: System captures multiple face images for training
 3. **Model Training**: AI model trains automatically after face capture
 4. **Recognition Ready**: Users can now mark attendance using face recognition
@@ -201,11 +201,11 @@ The frontend will start on `http://localhost:5173`
 
 ### 📸 System Screenshots
 
-| Dashboard | Registration |
+| Home | Student Dashboard |
 |:---:|:---:|
 | ![RecognizeMe Dashboard](demo/images/img1.png) | ![User Registration](demo/images/img2.png) |
 
-| Attendance Tracking | Admin Panel |
+| Administrater Dashboard | Admin Panel |
 |:---:|:---:|
 | ![Attendance Tracking](demo/images/img3.png) | ![Admin Panel](demo/images/img4.png) |
 
