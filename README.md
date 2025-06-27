@@ -15,7 +15,7 @@
 [![Made with ❤️](https://img.shields.io/badge/Made%20with-❤️-FF1744?style=for-the-badge)](https://lusansapkota.com.np)
 
 [![GitHub Stars](https://img.shields.io/github/stars/Lusan-sapkota/Face-Recognition-Based-Attendance-System?style=for-the-badge&color=gold)](https://github.com/Lusan-sapkota/Face-Recognition-Based-Attendance-System/stargazers)
-[![GitHub Issues](https://img.shields.io/github/issues/lusansapkota/Face-Recognition-Based-Attendance-System?style=for-the-badge&color=orange)](https://github.com/lusansapkota/Face-Recognition-Based-Attendance-System/issues)
+[![GitHub Issues](https://img.shields.io/github/issues/Lusan-sapkota/Face-Recognition-Based-Attendance-System?style=for-the-badge&color=orange)](https://github.com/Lusan-sapkota/Face-Recognition-Based-Attendance-System/issues)
 [![GitHub Forks](https://img.shields.io/github/forks/Lusan-sapkota/Face-Recognition-Based-Attendance-System?style=for-the-badge&color=blue)](https://github.com/Lusan-sapkota/Face-Recognition-Based-Attendance-System/network)
 
 ---
@@ -163,8 +163,12 @@ pip install -r requirements.txt
 Create a `.env` file in the backend directory:
 
 ```env
+FLASK_APP=app.py
+FLASK_ENV=development
 SECRET_KEY=your-secret-key-here
+JWT_SECRET_KEY=your-jwt-secret-key-here
 ADMIN_PASSWORD=admin123
+DATABASE_URL=sqlite:///attendance.db
 ```
 
 > ⚠️ **Security Warning**: Never commit `.env` files or sensitive keys to version control. Add `.env` to your `.gitignore` file!
@@ -189,6 +193,15 @@ cd frontend
 
 ```bash
 npm install
+```
+
+#### Set environment variables
+
+Create a `.env` file in the frontend directory:
+
+```env
+VITE_API_BASE_URL=http://localhost:5000/api
+VITE_APP_NAME=RecognizeMe
 ```
 
 #### Run the development server
@@ -226,8 +239,6 @@ The frontend will start on `http://localhost:5173`
 2. **Capture Faces**: System captures multiple face images for training
 3. **Model Training**: AI model trains automatically after face capture
 4. **Recognition Ready**: Users can now mark attendance using face recognition
-
-## 🎨 Demo
 
 ## 🎨 Demo & Showcase
 
