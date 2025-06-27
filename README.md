@@ -14,9 +14,9 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-FF6B35?style=for-the-badge)](https://www.gnu.org/licenses/agpl-3.0)
 [![Made with ❤️](https://img.shields.io/badge/Made%20with-❤️-FF1744?style=for-the-badge)](https://lusansapkota.com.np)
 
-[![GitHub Stars](https://img.shields.io/github/stars/lusansapkota/Face-Recognition-Based-Attendance-System?style=for-the-badge&color=gold)](https://github.com/lusansapkota/Face-Recognition-Based-Attendance-System/stargazers)
+[![GitHub Stars](https://img.shields.io/github/stars/Lusan-sapkota/Face-Recognition-Based-Attendance-System?style=for-the-badge&color=gold)](https://github.com/Lusan-sapkota/Face-Recognition-Based-Attendance-System/stargazers)
 [![GitHub Issues](https://img.shields.io/github/issues/lusansapkota/Face-Recognition-Based-Attendance-System?style=for-the-badge&color=orange)](https://github.com/lusansapkota/Face-Recognition-Based-Attendance-System/issues)
-[![GitHub Forks](https://img.shields.io/github/forks/lusansapkota/Face-Recognition-Based-Attendance-System?style=for-the-badge&color=blue)](https://github.com/lusansapkota/Face-Recognition-Based-Attendance-System/network)
+[![GitHub Forks](https://img.shields.io/github/forks/Lusan-sapkota/Face-Recognition-Based-Attendance-System?style=for-the-badge&color=blue)](https://github.com/Lusan-sapkota/Face-Recognition-Based-Attendance-System/network)
 
 ---
 
@@ -128,7 +128,7 @@ Before running this application, make sure you have:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/lusansapkota/Face-Recognition-Based-Attendance-System.git
+git clone https://github.com/Lusan-sapkota/Face-Recognition-Based-Attendance-System.git
 cd Face-Recognition-Based-Attendance-System
 ```
 
