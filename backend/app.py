@@ -18,8 +18,39 @@ from database import Database
 # Load environment variables
 load_dotenv()
 
+# Initialize database immediately
+def create_database():
+    """Create and initialize the database"""
+    try:
+        print("Creating database connection...")
+        database = Database()
+        print("Database initialized successfully")
+        
+        # Test the connection
+        users = database.get_all_users()
+        print(f"Database connection verified. Found {len(users)} users.")
+        return database
+        
+    except Exception as e:
+        print(f"Error initializing database: {e}")
+        print("Attempting to create new database...")
+        try:
+            # Force create the database file
+            import sqlite3
+            conn = sqlite3.connect('attendance.db')
+            conn.close()
+            
+            # Try again
+            database = Database()
+            print("Database created successfully")
+            return database
+            
+        except Exception as e2:
+            print(f"Critical error: Cannot create database: {e2}")
+            raise e2
+
 # Initialize database
-db = Database()
+db = create_database()
 
 # Defining Flask App
 app = Flask(__name__)
@@ -110,8 +141,32 @@ def extract_faces(img):
 
 # Identify face using ML model
 def identify_face(facearray):
-    model = joblib.load('static/face_recognition_model.pkl')
-    return model.predict(facearray)
+    try:
+        if not os.path.exists('static/face_recognition_model.pkl'):
+            print("Face recognition model not found")
+            return None
+        
+        model = joblib.load('static/face_recognition_model.pkl')
+        
+        # Get prediction and confidence
+        prediction = model.predict(facearray)
+        
+        # Get prediction probabilities for confidence check
+        if hasattr(model, 'predict_proba'):
+            probabilities = model.predict_proba(facearray)
+            max_confidence = np.max(probabilities)
+            
+            # Set confidence threshold (adjust as needed) - lowered for better recognition
+            confidence_threshold = 0.3  # Reduced to 0.3 for even better recognition
+            
+            if max_confidence < confidence_threshold:
+                print(f"Low confidence prediction: {max_confidence}")
+                return None
+        
+        return prediction
+    except Exception as e:
+        print(f"Error in face identification: {str(e)}")
+        return None
 
 # A function which trains the model on all the faces available in database
 def train_model():
@@ -434,7 +489,7 @@ def capture_face():
                             y_end = min(frame.shape[0], y + h + padding)
                             
                             face = frame[y_start:y_end, x_start:x_end]
-                            face_resized = cv2.resize(face, (200, 200))
+                            face_resized = cv2.resize(face, (50, 50))
                             
                             image_path = f'{userimagefolder}/{captured_images + 1}.jpg'
                             cv2.imwrite(image_path, face_resized)
@@ -553,8 +608,8 @@ def scan_face():
         face_img = img[y:y+h, x:x+w]
         face_filename = f'{userimagefolder}/face_{face_count + 1}.jpg'
         
-        # Resize face to standard size for better recognition
-        face_resized = cv2.resize(face_img, (200, 200))
+        # Resize face to standard size for better recognition (match training size)
+        face_resized = cv2.resize(face_img, (50, 50))
         cv2.imwrite(face_filename, face_resized)
         
         # Train model if we have enough faces (3 images)
@@ -629,28 +684,54 @@ def delete_user(user_id):
     if current_user != 'admin':
         return jsonify({'message': 'Admin access required'}), 403
     
-    # Get user info first
-    user = db.get_user(user_id)
-    if not user:
-        return jsonify({'message': 'User not found'}), 404
-    
-    # Delete user folder
-    user_key = f"{user['name']}_{user['user_id']}"
-    user_folder = f'static/faces/{user_key}'
-    if os.path.isdir(user_folder):
-        import shutil
-        shutil.rmtree(user_folder)
-    
-    # Delete from database
-    if db.delete_user(user_id):
-        # Retrain model if there are still users
-        remaining_users = db.get_all_users()
-        if len(remaining_users) > 0:
-            train_model()
+    try:
+        # Get user info first
+        user = db.get_user(user_id)
+        if not user:
+            return jsonify({'message': 'User not found'}), 404
         
-        return jsonify({'message': 'User deleted successfully'})
-    else:
-        return jsonify({'message': 'Failed to delete user'}), 500
+        # Delete user face folder and all photos
+        user_key = f"{user['name']}_{user['user_id']}"
+        user_folder = f'static/faces/{user_key}'
+        
+        if os.path.isdir(user_folder):
+            try:
+                import shutil
+                shutil.rmtree(user_folder)
+                print(f"Deleted face folder: {user_folder}")
+            except Exception as folder_error:
+                print(f"Warning: Could not delete face folder {user_folder}: {str(folder_error)}")
+                # Continue with user deletion even if folder deletion fails
+        
+        # Delete from database
+        if db.delete_user(user_id):
+            # Retrain model if there are still users
+            try:
+                remaining_users = db.get_all_users()
+                if len(remaining_users) > 0:
+                    train_model()
+                    print("Model retrained after user deletion")
+                else:
+                    # Remove model file if no users left
+                    model_path = 'static/face_recognition_model.pkl'
+                    if os.path.exists(model_path):
+                        os.remove(model_path)
+                        print("Removed model file - no users remaining")
+            except Exception as model_error:
+                print(f"Warning: Model retraining failed: {str(model_error)}")
+                # Don't fail the deletion if model retraining fails
+            
+            return jsonify({
+                'message': 'User deleted successfully',
+                'deleted_user': user['name'],
+                'face_data_removed': os.path.isdir(user_folder) == False
+            })
+        else:
+            return jsonify({'message': 'Failed to delete user from database'}), 500
+            
+    except Exception as e:
+        print(f"Error deleting user {user_id}: {str(e)}")
+        return jsonify({'message': f'Error deleting user: {str(e)}'}), 500
 
 @app.route('/api/admin/users/<user_id>', methods=['PUT'])
 @jwt_required()
@@ -659,44 +740,87 @@ def update_user(user_id):
     if current_user != 'admin':
         return jsonify({'message': 'Admin access required'}), 403
     
-    data = request.get_json()
-    if not data:
-        return jsonify({'message': 'No data provided'}), 400
-    
-    # Get the current user to validate existence
-    existing_user = db.get_user(user_id)
-    if not existing_user:
-        return jsonify({'message': 'User not found'}), 404
-    
-    # Update user information
-    updated_data = {
-        'name': data.get('name', existing_user['name']),
-        'user_id': data.get('user_id', existing_user['user_id']),
-        'username': data.get('username', existing_user['username']),
-        'type': data.get('type', existing_user['type']),
-        'class_section': data.get('class_section', existing_user.get('class_section', ''))
-    }
-    
-    # If user_id is being changed, we need to update the face folder too
-    if updated_data['user_id'] != existing_user['user_id'] or updated_data['name'] != existing_user['name']:
-        old_user_key = f"{existing_user['name']}_{existing_user['user_id']}"
-        new_user_key = f"{updated_data['name']}_{updated_data['user_id']}"
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'message': 'No data provided'}), 400
         
-        old_folder = f'static/faces/{old_user_key}'
-        new_folder = f'static/faces/{new_user_key}'
+        # Get the current user to validate existence
+        existing_user = db.get_user(user_id)
+        if not existing_user:
+            return jsonify({'message': 'User not found'}), 404
         
-        # Rename the face folder if it exists
-        if os.path.isdir(old_folder):
-            try:
-                os.rename(old_folder, new_folder)
-            except OSError as e:
-                return jsonify({'message': f'Error updating face folder: {str(e)}'}), 500
-    
-    # Update user in database
-    if db.update_user(user_id, updated_data):
-        return jsonify({'message': 'User updated successfully'})
-    else:
-        return jsonify({'message': 'Failed to update user'}), 500
+        # Validate required fields
+        name = data.get('name', '').strip()
+        username = data.get('username', '').strip()
+        user_type = data.get('type', existing_user['type'])
+        class_section = data.get('class_section', existing_user.get('class_section', ''))
+        
+        if not name or not username:
+            return jsonify({'message': 'Name and username are required'}), 400
+        
+        # Check if username is already taken by another user
+        if username != existing_user['username']:
+            existing_username_user = db.get_user_by_username(username)
+            if existing_username_user and existing_username_user['user_id'] != user_id:
+                return jsonify({'message': 'Username is already taken'}), 400
+        
+        # Update user information
+        updated_data = {
+            'name': name,
+            'user_id': user_id,  # Keep the same user_id
+            'username': username,
+            'type': user_type,
+            'class_section': class_section
+        }
+        
+        # If name is being changed, we need to update the face folder too
+        if name != existing_user['name']:
+            old_user_key = f"{existing_user['name']}_{existing_user['user_id']}"
+            new_user_key = f"{name}_{user_id}"
+            
+            old_folder = f'static/faces/{old_user_key}'
+            new_folder = f'static/faces/{new_user_key}'
+            
+            # Rename the face folder if it exists
+            if os.path.isdir(old_folder):
+                try:
+                    if os.path.exists(new_folder):
+                        # If new folder exists, remove it first
+                        import shutil
+                        shutil.rmtree(new_folder)
+                    os.rename(old_folder, new_folder)
+                    print(f"Renamed face folder from {old_folder} to {new_folder}")
+                except OSError as e:
+                    print(f"Warning: Could not rename face folder: {str(e)}")
+                    return jsonify({'message': f'Error updating face folder: {str(e)}'}), 500
+        
+        # Update user in database
+        if db.update_user(user_id, updated_data):
+            # Retrain model if face folder was renamed
+            if name != existing_user['name']:
+                try:
+                    train_model()
+                    print("Model retrained after user update")
+                except Exception as model_error:
+                    print(f"Warning: Model retraining failed: {str(model_error)}")
+            
+            return jsonify({
+                'message': 'User updated successfully',
+                'updated_user': {
+                    'id': user_id,
+                    'name': name,
+                    'username': username,
+                    'type': user_type,
+                    'class_section': class_section
+                }
+            })
+        else:
+            return jsonify({'message': 'Failed to update user in database'}), 500
+            
+    except Exception as e:
+        print(f"Error updating user {user_id}: {str(e)}")
+        return jsonify({'message': f'Error updating user: {str(e)}'}), 500
 
 @app.route('/api/admin/users/<user_id>/password', methods=['PUT'])
 @jwt_required()
@@ -705,23 +829,36 @@ def reset_user_password(user_id):
     if current_user != 'admin':
         return jsonify({'message': 'Admin access required'}), 403
     
-    data = request.get_json()
-    new_password = data.get('password')
-    
-    if not new_password:
-        return jsonify({'message': 'New password is required'}), 400
-    
-    if len(new_password) < 6:
-        return jsonify({'message': 'Password must be at least 6 characters long'}), 400
-    
-    # Hash the new password
-    password_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-    
-    # Update password in database
-    if db.update_user_password(user_id, password_hash):
-        return jsonify({'message': 'Password reset successfully'})
-    else:
-        return jsonify({'message': 'Failed to reset password'}), 500
+    try:
+        data = request.get_json()
+        new_password = data.get('password')
+        
+        if not new_password:
+            return jsonify({'message': 'New password is required'}), 400
+        
+        if len(new_password) < 6:
+            return jsonify({'message': 'Password must be at least 6 characters long'}), 400
+        
+        # Check if user exists
+        user = db.get_user(user_id)
+        if not user:
+            return jsonify({'message': 'User not found'}), 404
+        
+        # Hash the new password
+        password_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        
+        # Update password in database
+        if db.update_user_password(user_id, password_hash):
+            return jsonify({
+                'message': 'Password reset successfully',
+                'user_name': user['name']
+            })
+        else:
+            return jsonify({'message': 'Failed to reset password in database'}), 500
+            
+    except Exception as e:
+        print(f"Error resetting password for user {user_id}: {str(e)}")
+        return jsonify({'message': f'Error resetting password: {str(e)}'}), 500
 
 @app.route('/api/admin/check-face-detection', methods=['POST'])
 @jwt_required()
@@ -1214,6 +1351,125 @@ def mark_attendance():
     except Exception as e:
         return jsonify({'message': f'Error marking attendance: {str(e)}'}), 500
 
+@app.route('/api/system/status', methods=['GET'])
+def get_system_status():
+    """Get system status for debugging face recognition issues"""
+    try:
+        # Check database
+        users = db.get_all_users()
+        
+        # Check face folders
+        users_with_faces = 0
+        face_folders = []
+        if os.path.exists('static/faces'):
+            for folder in os.listdir('static/faces'):
+                folder_path = f'static/faces/{folder}'
+                if os.path.isdir(folder_path):
+                    file_count = len([f for f in os.listdir(folder_path) if f.endswith('.jpg')])
+                    if file_count > 0:
+                        users_with_faces += 1
+                    face_folders.append({
+                        'folder': folder,
+                        'image_count': file_count
+                    })
+        
+        # Check model
+        model_exists = os.path.exists('static/face_recognition_model.pkl')
+        
+        # Check today's attendance
+        today = date.today().strftime("%m_%d_%y")
+        today_attendance = db.get_attendance(today)
+        
+        return jsonify({
+            'status': 'OK',
+            'database': {
+                'total_users': len(users),
+                'users_with_face_data': users_with_faces
+            },
+            'face_recognition': {
+                'model_exists': model_exists,
+                'face_folders': face_folders,
+                'ready_for_recognition': model_exists and users_with_faces > 0,
+                'confidence_threshold': 0.3
+            },
+            'attendance': {
+                'today_date': today,
+                'today_count': len(today_attendance),
+                'today_records': today_attendance
+            },
+            'directories': {
+                'static_exists': os.path.exists('static'),
+                'faces_exists': os.path.exists('static/faces')
+            },
+            'recommendations': [
+                'Register users first using admin panel' if len(users) == 0 else None,
+                'Capture face data for users' if users_with_faces == 0 else None,
+                'Train the model by capturing at least 3 faces per user' if not model_exists else None
+            ]
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'status': 'ERROR',
+            'error': str(e)
+        }), 500
+
+@app.route('/api/admin/force-train-model', methods=['POST'])
+@jwt_required()
+def force_train_model():
+    """Force train the face recognition model"""
+    current_user = get_jwt_identity()
+    if current_user != 'admin':
+        return jsonify({'message': 'Admin access required'}), 403
+    
+    try:
+        # Check if we have any users with face data
+        users_with_faces = 0
+        total_images = 0
+        
+        if os.path.exists('static/faces'):
+            for folder in os.listdir('static/faces'):
+                folder_path = f'static/faces/{folder}'
+                if os.path.isdir(folder_path):
+                    image_count = len([f for f in os.listdir(folder_path) if f.endswith('.jpg')])
+                    if image_count > 0:
+                        users_with_faces += 1
+                        total_images += image_count
+        
+        if users_with_faces == 0:
+            return jsonify({
+                'success': False,
+                'message': 'No users with face data found. Please capture face images first.'
+            }), 400
+        
+        # Try to train the model even with limited data
+        if train_model():
+            return jsonify({
+                'success': True,
+                'message': f'Model trained successfully with {users_with_faces} users and {total_images} images',
+                'users_trained': users_with_faces,
+                'total_images': total_images
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Failed to train model. Please ensure face images exist.',
+                'users_with_faces': users_with_faces,
+                'total_images': total_images
+            }), 500
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error training model: {str(e)}'
+        }), 500
+        
+    except Exception as e:
+        return jsonify({
+            'status': 'ERROR',
+            'error': str(e)
+        }), 500
+
 @app.route('/api/user/mark-attendance-with-image', methods=['POST'])
 @jwt_required()
 def mark_attendance_with_image():
@@ -1224,15 +1480,24 @@ def mark_attendance_with_image():
         image_data = data.get('image')
         
         if not image_data:
-            return jsonify({'message': 'No image data received'}), 400
+            return jsonify({
+                'success': False,
+                'message': 'No image data received'
+            }), 400
         
         user = db.get_user(current_user)
         if not user:
-            return jsonify({'message': 'User not found'}), 404
+            return jsonify({
+                'success': False,
+                'message': 'User not found'
+            }), 404
         
         # Check if model exists
         if not os.path.exists('static/face_recognition_model.pkl'):
-            return jsonify({'message': 'Face recognition model not found'}), 400
+            return jsonify({
+                'success': False,
+                'message': 'Face recognition model not found. Please contact admin to train the model.'
+            }), 400
         
         # Decode and process image
         try:
@@ -1244,16 +1509,25 @@ def mark_attendance_with_image():
             img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
             
             if img is None:
-                return jsonify({'message': 'Invalid image data'}), 400
+                return jsonify({
+                    'success': False,
+                    'message': 'Invalid image data'
+                }), 400
             
         except Exception as decode_error:
-            return jsonify({'message': f'Error decoding image: {str(decode_error)}'}), 400
+            return jsonify({
+                'success': False,
+                'message': f'Error decoding image: {str(decode_error)}'
+            }), 400
         
         # Extract faces and identify
         faces = extract_faces(img)
         
         if len(faces) == 0:
-            return jsonify({'message': 'No face detected in image'}), 400
+            return jsonify({
+                'success': False,
+                'message': 'No face detected in image. Please ensure good lighting and position your face clearly.'
+            }), 400
         
         # Get the best face
         best_face = max(faces, key=lambda face: face[2] * face[3])
@@ -1266,30 +1540,70 @@ def mark_attendance_with_image():
         identified_person = identify_face(face_resized.reshape(1, -1))
         
         if identified_person is None:
-            return jsonify({'message': 'Face not recognized'}), 400
+            return jsonify({
+                'success': False,
+                'message': 'Face not recognized. Please ensure you have registered your face properly or contact admin.',
+                'debug_info': {
+                    'model_exists': os.path.exists('static/face_recognition_model.pkl'),
+                    'face_detected': True,
+                    'face_size': f'{w}x{h}',
+                    'user_id': current_user,
+                    'expected_user': f"{user['name']}_{user['user_id']}"
+                }
+            }), 400
         
         # Check if the identified person matches the current user
         expected_user_key = f"{user['name']}_{user['user_id']}"
         identified_user_key = identified_person[0]
         
+        print(f"Face recognition - Expected: {expected_user_key}, Got: {identified_user_key}")
+        
         if identified_user_key != expected_user_key:
-            return jsonify({'message': 'Face does not match user account'}), 400
+            return jsonify({
+                'success': False,
+                'message': f'Face recognition mismatch. Your face was recognized as a different user. Please re-register your face.',
+                'debug_info': {
+                    'expected_user': expected_user_key,
+                    'recognized_user': identified_user_key,
+                    'face_size': f'{w}x{h}'
+                }
+            }), 400
         
         # Check if already marked attendance today
         today = date.today().strftime("%m_%d_%y")
         existing_attendance = db.get_user_attendance_for_date(current_user, today)
         
         if existing_attendance:
-            return jsonify({'message': 'Attendance already marked for today'}), 400
+            return jsonify({
+                'success': False,
+                'message': 'Attendance already marked for today'
+            }), 400
         
-        # Mark attendance
-        if add_attendance(expected_user_key, user['type']):
-            return jsonify({'message': 'Attendance marked successfully with face recognition'})
+        # Mark attendance with better error handling
+        attendance_result = add_attendance(expected_user_key, user['type'])
+        
+        if attendance_result:
+            print(f"Attendance marked successfully for user: {expected_user_key}")
+            return jsonify({
+                'success': True,
+                'message': 'Attendance marked successfully with face recognition!',
+                'user_name': user['name'],
+                'time': datetime.now().strftime("%H:%M:%S"),
+                'date': today
+            }), 200
         else:
-            return jsonify({'message': 'Failed to mark attendance'}), 500
+            print(f"Failed to mark attendance for user: {expected_user_key}")
+            return jsonify({
+                'success': False,
+                'message': 'Failed to mark attendance in database. Please try again.'
+            }), 500
     
     except Exception as e:
-        return jsonify({'message': f'Error marking attendance: {str(e)}'}), 500
+        print(f"Error in mark_attendance_with_image: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'Error marking attendance: {str(e)}'
+        }), 500
 
 @app.route('/api/user/start-face-scan', methods=['POST'])
 @jwt_required()
@@ -1366,19 +1680,199 @@ def unauthorized_error(error):
 def forbidden_error(error):
     return jsonify({'message': 'Access forbidden'}), 403
 
-if __name__ == '__main__':
+# Test endpoint for debugging user operations
+@app.route('/api/admin/test-user-ops', methods=['GET'])
+@jwt_required()
+def test_user_operations():
+    current_user = get_jwt_identity()
+    if current_user != 'admin':
+        return jsonify({'message': 'Admin access required'}), 403
+    
+    try:
+        # Test database connection
+        users = db.get_all_users()
+        
+        # Test face folder access
+        face_folders = []
+        if os.path.exists('static/faces'):
+            for folder in os.listdir('static/faces'):
+                folder_path = f'static/faces/{folder}'
+                if os.path.isdir(folder_path):
+                    file_count = len(os.listdir(folder_path))
+                    face_folders.append({
+                        'folder': folder,
+                        'file_count': file_count
+                    })
+        
+        # Test model file
+        model_exists = os.path.exists('static/face_recognition_model.pkl')
+        
+        return jsonify({
+            'database_connection': 'OK',
+            'total_users': len(users),
+            'face_folders': face_folders,
+            'model_exists': model_exists,
+            'static_folder_exists': os.path.exists('static'),
+            'faces_folder_exists': os.path.exists('static/faces')
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'database_connection': 'FAILED'
+        }), 500
+
+@app.route('/api/debug/face-recognition', methods=['POST'])
+@jwt_required()
+def debug_face_recognition():
+    """Debug endpoint for face recognition issues"""
+    current_user = get_jwt_identity()
+    
+    try:
+        data = request.get_json()
+        image_data = data.get('image')
+        
+        debug_info = {
+            'step': 'starting',
+            'user_id': current_user,
+            'model_exists': os.path.exists('static/face_recognition_model.pkl'),
+            'static_folder_exists': os.path.exists('static'),
+            'faces_folder_exists': os.path.exists('static/faces')
+        }
+        
+        if not image_data:
+            debug_info['error'] = 'No image data received'
+            return jsonify(debug_info), 400
+        
+        debug_info['step'] = 'image_received'
+        
+        # Get user info
+        user = db.get_user(current_user)
+        if not user:
+            debug_info['error'] = 'User not found in database'
+            return jsonify(debug_info), 404
+        
+        debug_info['user_name'] = user['name']
+        debug_info['expected_user_key'] = f"{user['name']}_{user['user_id']}"
+        
+        # Check if model exists
+        if not os.path.exists('static/face_recognition_model.pkl'):
+            debug_info['error'] = 'Face recognition model not found'
+            debug_info['suggestion'] = 'Please register users and train the model first'
+            return jsonify(debug_info), 400
+        
+        debug_info['step'] = 'model_exists'
+        
+        # Decode image
+        try:
+            if ',' in image_data:
+                image_data = image_data.split(',')[1]
+            
+            image_bytes = base64.b64decode(image_data)
+            nparr = np.frombuffer(image_bytes, np.uint8)
+            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+            
+            if img is None:
+                debug_info['error'] = 'Invalid image data - could not decode'
+                return jsonify(debug_info), 400
+            
+            debug_info['step'] = 'image_decoded'
+            debug_info['image_shape'] = img.shape
+            
+        except Exception as decode_error:
+            debug_info['error'] = f'Error decoding image: {str(decode_error)}'
+            return jsonify(debug_info), 400
+        
+        # Extract faces
+        faces = extract_faces(img)
+        debug_info['faces_detected'] = len(faces)
+        
+        if len(faces) == 0:
+            debug_info['error'] = 'No face detected in image'
+            debug_info['suggestion'] = 'Ensure good lighting and face is clearly visible'
+            return jsonify(debug_info), 400
+        
+        debug_info['step'] = 'faces_extracted'
+        debug_info['face_coordinates'] = faces
+        
+        # Get the best face
+        best_face = max(faces, key=lambda face: face[2] * face[3])
+        x, y, w, h = best_face
+        debug_info['best_face'] = {'x': x, 'y': y, 'w': w, 'h': h}
+        
+        face_img = img[y:y+h, x:x+w]
+        face_resized = cv2.resize(face_img, (50, 50))
+        debug_info['step'] = 'face_resized'
+        
+        # Try to identify the face
+        identified_person = identify_face(face_resized.reshape(1, -1))
+        
+        if identified_person is None:
+            debug_info['error'] = 'Face not recognized by model'
+            debug_info['suggestion'] = 'Low confidence or face not in training data'
+            return jsonify(debug_info), 400
+        
+        debug_info['step'] = 'face_identified'
+        debug_info['identified_user_key'] = identified_person[0]
+        
+        # Check if matches current user
+        expected_user_key = f"{user['name']}_{user['user_id']}"
+        identified_user_key = identified_person[0]
+        
+        debug_info['match'] = identified_user_key == expected_user_key
+        
+        if identified_user_key != expected_user_key:
+            debug_info['error'] = 'Face recognition mismatch'
+            debug_info['expected'] = expected_user_key
+            debug_info['recognized'] = identified_user_key
+            return jsonify(debug_info), 400
+        
+        debug_info['step'] = 'success'
+        debug_info['message'] = 'Face recognition successful'
+        
+        return jsonify(debug_info), 200
+        
+    except Exception as e:
+        return jsonify({
+            'error': f'Debug error: {str(e)}',
+            'step': 'exception'
+        }), 500
+
+def init_app():
+    """Initialize the application and database"""
+    global db
+    
     # Create necessary directories
     os.makedirs('backups', exist_ok=True)
     os.makedirs('exports', exist_ok=True)
+    os.makedirs('static', exist_ok=True)
+    os.makedirs('static/faces', exist_ok=True)
     
-    # Initialize database tables (creates tables if they don't exist)
+    # Initialize database
     try:
-        db.init_db()
+        print("Initializing database...")
+        db = Database()
         print("Database initialized successfully")
+        
+        # Test database connection
+        users = db.get_all_users()
+        print(f"Database connection verified. Found {len(users)} users.")
+        
     except Exception as e:
         print(f"Error initializing database: {e}")
-        exit(1)
-    
+        print("Creating new database...")
+        try:
+            # Try to create database file if it doesn't exist
+            db = Database()
+            print("Database created successfully")
+        except Exception as e2:
+            print(f"Failed to create database: {e2}")
+            exit(1)
+
+# Initialize the app when module is loaded
+init_app()
+
+if __name__ == '__main__':
     # Run the app
     print("Starting Face Recognition Attendance System...")
     print("Frontend: http://localhost:3000")

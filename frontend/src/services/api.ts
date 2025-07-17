@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { mockAuthAPI, mockDashboardAPI, mockAdminAPI, isDemoMode } from './mockAuth'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'
 
@@ -32,16 +33,41 @@ api.interceptors.response.use(
 )
 
 export const authAPI = {
-  adminLogin: (password: string) => api.post('/admin/login', { password }),
-  userLogin: (username: string, password: string) => api.post('/user/login', { username, password }),
+  adminLogin: (password: string) => {
+    if (isDemoMode()) {
+      return mockAuthAPI.adminLogin(password)
+    }
+    return api.post('/admin/login', { password })
+  },
+  userLogin: (username: string, password: string) => {
+    if (isDemoMode()) {
+      return mockAuthAPI.userLogin(username, password)
+    }
+    return api.post('/user/login', { username, password })
+  },
   // Legacy login for backward compatibility
   login: (password: string) => api.post('/login', { password }),
 }
 
 export const dashboardAPI = {
-  getStats: () => api.get('/dashboard/stats'),
-  getAttendance: () => api.get('/attendance'),
-  startAttendance: () => api.post('/attendance/start'),
+  getStats: () => {
+    if (isDemoMode()) {
+      return mockDashboardAPI.getStats()
+    }
+    return api.get('/dashboard/stats')
+  },
+  getAttendance: () => {
+    if (isDemoMode()) {
+      return mockDashboardAPI.getAttendance()
+    }
+    return api.get('/attendance')
+  },
+  startAttendance: () => {
+    if (isDemoMode()) {
+      return mockDashboardAPI.startAttendance()
+    }
+    return api.post('/attendance/start')
+  },
 }
 
 export const adminAPI = {
@@ -59,18 +85,33 @@ export const adminAPI = {
     api.post('/admin/scan-face', imageData),
   checkFaceDetection: () => api.post('/admin/check-face-detection'),
   testCamera: () => api.post('/admin/test-camera'),
-  getUsers: () => api.get('/admin/users'),
+  getUsers: () => {
+    if (isDemoMode()) {
+      return mockAdminAPI.getUsers()
+    }
+    return api.get('/admin/users')
+  },
   deleteUser: (userId: string) => api.delete(`/admin/users/${userId}`),
   updateUser: (userId: string, userData: any) => api.put(`/admin/users/${userId}`, userData),
   updateUserPassword: (userId: string, password: string) => 
     api.put(`/admin/users/${userId}/password`, { password }),
   resetPassword: (userId: string, password: string) => 
     api.put(`/admin/users/${userId}/password`, { password }),
-  getNotices: () => api.get('/admin/notices'),
+  getNotices: () => {
+    if (isDemoMode()) {
+      return mockAdminAPI.getNotices()
+    }
+    return api.get('/admin/notices')
+  },
   createNotice: (notice: { title: string; content: string; priority?: string }) => 
     api.post('/admin/notices', notice),
   deleteNotice: (noticeId: string) => api.delete(`/admin/notices/${noticeId}`),
-  getAttendanceHistory: () => api.get('/admin/attendance-history'),
+  getAttendanceHistory: () => {
+    if (isDemoMode()) {
+      return mockAdminAPI.getAttendanceHistory()
+    }
+    return api.get('/admin/attendance-history')
+  },
   
   // Backup and Export functions
   backupDatabase: () => api.post('/admin/backup/database'),
@@ -89,8 +130,18 @@ export const adminAPI = {
   saveClassConfig: (config: any) => api.post('/admin/class-config', config),
   saveTimeSettings: (settings: any) => api.post('/admin/time-settings', settings),
   getActiveClasses: () => api.get('/admin/active-classes'),
-  getAnalytics: () => api.get('/admin/analytics'),
-  getRecentActivity: () => api.get('/admin/recent-activity'), // New endpoint
+  getAnalytics: () => {
+    if (isDemoMode()) {
+      return mockAdminAPI.getAnalytics()
+    }
+    return api.get('/admin/analytics')
+  },
+  getRecentActivity: () => {
+    if (isDemoMode()) {
+      return mockAdminAPI.getRecentActivity()
+    }
+    return api.get('/admin/recent-activity')
+  },
 }
 
 export const analyticsAPI = {

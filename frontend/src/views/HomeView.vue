@@ -152,6 +152,102 @@
       </div>
     </section>
 
+    <!-- Demo Section -->
+    <section class="demo">
+      <div class="container">
+        <div class="demo-content">
+          <div class="demo-header text-center">
+            <h2 class="section-title gradient-text">Try the Demo</h2>
+            <p class="section-subtitle">
+              Experience the full functionality with our demo credentials
+            </p>
+          </div>
+          
+          <div class="demo-cards">
+            <div class="demo-card card">
+              <div class="demo-card-header">
+                <div class="demo-icon user-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                </div>
+                <h3 class="demo-title">User Demo</h3>
+              </div>
+              <div class="demo-credentials">
+                <div class="credential-item">
+                  <span class="credential-label">Username:</span>
+                  <code class="credential-value">demo_user</code>
+                </div>
+                <div class="credential-item">
+                  <span class="credential-label">Password:</span>
+                  <code class="credential-value">demo123</code>
+                </div>
+              </div>
+              <RouterLink to="/login" class="btn btn-secondary demo-btn">
+                Try User Demo
+              </RouterLink>
+            </div>
+
+            <div class="demo-card card">
+              <div class="demo-card-header">
+                <div class="demo-icon admin-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                  </svg>
+                </div>
+                <h3 class="demo-title">Admin Demo</h3>
+              </div>
+              <div class="demo-credentials">
+                <div class="credential-item">
+                  <span class="credential-label">Password:</span>
+                  <code class="credential-value">admin123</code>
+                </div>
+              </div>
+              <RouterLink to="/admin/login" class="btn btn-primary demo-btn">
+                Try Admin Demo
+              </RouterLink>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Backend Notice Section -->
+    <section class="backend-notice">
+      <div class="container">
+        <div class="notice-card card">
+          <div class="notice-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M12 6v6l4 2"></path>
+            </svg>
+          </div>
+          <div class="notice-content">
+            <h3 class="notice-title">Frontend Demo Notice</h3>
+            <p class="notice-text">
+              This is a frontend-only demo for showcase purposes. The complete application with full backend functionality, 
+              including face recognition, database operations, and real-time attendance tracking, is available in our 
+              GitHub repository.
+            </p>
+            <div class="notice-actions">
+              <a 
+                href="https://github.com/Lusan-sapkota/Face-Recognition-Based-Attendance-System" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                class="btn btn-outline github-btn"
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" class="github-icon">
+                  <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                </svg>
+                View Full Project
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- CTA Section -->
     <section class="cta">
       <div class="container">
@@ -438,6 +534,210 @@ const scrollToFeatures = () => {
 .step-description {
   color: var(--text-secondary);
   line-height: 1.6;
+}
+
+/* Demo Section */
+.demo {
+  padding: 120px 0;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.demo-content {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.demo-header {
+  margin-bottom: 60px;
+}
+
+.demo-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 40px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.demo-card {
+  padding: 40px 32px;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 20px;
+}
+
+.demo-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.4);
+}
+
+.demo-card-header {
+  margin-bottom: 32px;
+}
+
+.demo-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 20px;
+  padding: 16px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.demo-icon.user-icon {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+}
+
+.demo-icon.admin-icon {
+  background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+}
+
+.demo-icon svg {
+  width: 32px;
+  height: 32px;
+  color: white;
+}
+
+.demo-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.demo-credentials {
+  margin-bottom: 32px;
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.credential-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.credential-item:last-child {
+  margin-bottom: 0;
+}
+
+.credential-label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.credential-value {
+  background: rgba(0, 191, 255, 0.1);
+  color: var(--accent-color);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid rgba(0, 191, 255, 0.2);
+}
+
+.demo-btn {
+  width: 100%;
+  padding: 16px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+/* Backend Notice Section */
+.backend-notice {
+  padding: 80px 0;
+}
+
+.notice-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  padding: 40px;
+  max-width: 900px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 152, 0, 0.1) 100%);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.notice-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #ffc107 0%, #ff9800 100%);
+}
+
+.notice-icon {
+  width: 48px;
+  height: 48px;
+  padding: 12px;
+  background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.notice-icon svg {
+  width: 24px;
+  height: 24px;
+  color: white;
+}
+
+.notice-content {
+  flex: 1;
+}
+
+.notice-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.notice-text {
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 24px;
+  font-size: 0.95rem;
+}
+
+.notice-actions {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.github-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.github-icon {
+  width: 18px;
+  height: 18px;
 }
 
 /* CTA Section */

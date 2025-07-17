@@ -1,5 +1,6 @@
 <template>
   <div id="app">
+    <BackendNotification />
     <nav class="nav" v-if="!isLoginRoute">
       <div class="container nav-container">
         <RouterLink to="/" class="nav-brand">
@@ -40,6 +41,7 @@
 import { computed } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from './stores/counter'
+import BackendNotification from './components/BackendNotification.vue'
 
 const route = useRoute()
 const router = useRouter()

@@ -30,13 +30,13 @@
               </h1>
               <p class="role-subtitle">
                 <span class="role-chip" :class="authStore.isAdmin ? 'admin' : 'student'">
-                  {{ authStore.isAdmin ? '👨‍💼 Administrator' : '👨‍🎓 Student' }}
+                  {{ authStore.isAdmin ? 'Administrator' : 'Student' }}
                 </span>
                 <span class="date-display">{{ getCurrentDate() }}</span>
               </p>
             </div>
           </div>
-          
+
           <div class="header-actions">
             <div v-if="!authStore.isAdmin" class="stats-preview">
               <div class="stat-mini">
@@ -48,7 +48,7 @@
                 <span class="stat-text">Days Present</span>
               </div>
             </div>
-            
+
             <div class="action-buttons">
               <button v-if="!authStore.isAdmin" @click="openCameraModal" class="primary-action-btn">
                 <div class="btn-icon">
@@ -57,14 +57,14 @@
                 </div>
                 <span class="btn-text">Mark Attendance</span>
               </button>
-              
+
               <button v-if="authStore.isAdmin" @click="openUserRegistrationModal" class="primary-action-btn admin-btn">
                 <div class="btn-icon">
                   <i class="icon-user-plus">👤➕</i>
                 </div>
                 <span class="btn-text">Register User</span>
               </button>
-              
+
               <button class="secondary-action-btn" @click="refreshData">
                 <i class="icon-refresh">🔄</i>
               </button>
@@ -81,9 +81,10 @@
             <div class="loader-text">Loading Dashboard...</div>
           </div>
         </div>
-        
+
         <div v-else class="stats-grid">
-          <div v-for="(stat, index) in getStatsConfig" :key="index" class="stat-card" :style="{ '--delay': index * 0.1 + 's' }">
+          <div v-for="(stat, index) in getStatsConfig" :key="index" class="stat-card"
+            :style="{ '--delay': index * 0.1 + 's' }">
             <div class="stat-background">
               <div class="stat-pattern"></div>
             </div>
@@ -106,13 +107,8 @@
       <!-- Enhanced Navigation Tabs -->
       <nav class="modern-nav">
         <div class="nav-wrapper">
-          <button 
-            v-for="tab in tabs" 
-            :key="tab.id"
-            @click="activeTab = tab.id"
-            class="nav-tab"
-            :class="{ active: activeTab === tab.id }"
-          >
+          <button v-for="tab in tabs" :key="tab.id" @click="activeTab = tab.id" class="nav-tab"
+            :class="{ active: activeTab === tab.id }">
             <span class="tab-icon">{{ tab.icon }}</span>
             <span class="tab-label">{{ tab.label }}</span>
             <div class="tab-highlight"></div>
@@ -137,20 +133,13 @@
                   <button class="control-btn">📤 Export</button>
                 </div>
               </div>
-              
+
               <div class="chart-area">
                 <div v-if="attendanceChart.length > 0" class="modern-chart">
-                  <div 
-                    v-for="(month, index) in attendanceChart" 
-                    :key="index"
-                    class="chart-column"
-                    :style="{ 
-                      height: month.percentage + '%',
-                      animationDelay: (index * 0.1) + 's'
-                    }"
-                    @mouseover="showChartTooltip(month, $event)"
-                    @mouseleave="hideChartTooltip"
-                  >
+                  <div v-for="(month, index) in attendanceChart" :key="index" class="chart-column" :style="{
+                    height: month.percentage + '%',
+                    animationDelay: (index * 0.1) + 's'
+                  }" @mouseover="showChartTooltip(month, $event)" @mouseleave="hideChartTooltip">
                     <div class="column-fill"></div>
                     <div class="column-label">{{ month.month.slice(0, 3) }}</div>
                     <div class="column-value">{{ month.days }}</div>
@@ -174,23 +163,16 @@
                   Weekly Pattern
                 </h3>
               </div>
-              
+
               <div class="heatmap-container">
-                <div 
-                  v-for="day in weeklyPattern" 
-                  :key="day.name"
-                  class="day-heatmap"
-                >
+                <div v-for="day in weeklyPattern" :key="day.name" class="day-heatmap">
                   <div class="day-header">
                     <span class="day-name">{{ day.name }}</span>
                     <span class="day-percentage">{{ day.percentage }}%</span>
                   </div>
                   <div class="day-progress-bar">
-                    <div 
-                      class="progress-fill" 
-                      :style="{ width: day.percentage + '%' }"
-                      :class="getProgressClass(day.percentage)"
-                    ></div>
+                    <div class="progress-fill" :style="{ width: day.percentage + '%' }"
+                      :class="getProgressClass(day.percentage)"></div>
                   </div>
                 </div>
               </div>
@@ -206,17 +188,15 @@
               </h3>
               <button class="control-btn" @click="refreshActivity">🔄 Refresh</button>
             </div>
-            
+
             <div class="timeline-container">
-              <div 
-                v-for="activity in recentActivity.slice(0, 8)" 
-                :key="authStore.isAdmin ? `${activity.user_id}-${activity.date}` : activity.date"
-                class="timeline-item"
-              >
+              <div v-for="activity in recentActivity.slice(0, 8)"
+                :key="authStore.isAdmin ? `${activity.user_id}-${activity.date}` : activity.date" class="timeline-item">
                 <div class="timeline-marker" :class="activity.status"></div>
                 <div class="timeline-content">
                   <div class="activity-meta">
-                    <span v-if="authStore.isAdmin" class="activity-user">{{ activity.user_name || 'Unknown User' }}</span>
+                    <span v-if="authStore.isAdmin" class="activity-user">{{ activity.user_name || 'Unknown User'
+                      }}</span>
                     <span class="activity-time">{{ formatTime(activity.time) }}</span>
                     <span class="activity-date">{{ formatDate(activity.date) }}</span>
                   </div>
@@ -230,7 +210,7 @@
                   </div>
                 </div>
               </div>
-              
+
               <div v-if="recentActivity.length === 0" class="empty-timeline">
                 <div class="empty-illustration">
                   <i class="empty-icon">📅</i>
@@ -256,28 +236,18 @@
                   Important Announcements
                 </h2>
               </div>
-              
+
               <div class="notices-actions">
                 <div class="notices-filters">
-                  <button 
-                    class="filter-btn" 
-                    :class="{ active: noticeFilter === 'all' }"
-                    @click="noticeFilter = 'all'"
-                  >
+                  <button class="filter-btn" :class="{ active: noticeFilter === 'all' }" @click="noticeFilter = 'all'">
                     All
                   </button>
-                  <button 
-                    class="filter-btn" 
-                    :class="{ active: noticeFilter === 'recent' }"
-                    @click="noticeFilter = 'recent'"
-                  >
+                  <button class="filter-btn" :class="{ active: noticeFilter === 'recent' }"
+                    @click="noticeFilter = 'recent'">
                     Recent
                   </button>
-                  <button 
-                    class="filter-btn" 
-                    :class="{ active: noticeFilter === 'important' }"
-                    @click="noticeFilter = 'important'"
-                  >
+                  <button class="filter-btn" :class="{ active: noticeFilter === 'important' }"
+                    @click="noticeFilter = 'important'">
                     Important
                   </button>
                   <button v-if="authStore.isAdmin" @click="createNotice" class="create-notice-btn">
@@ -287,19 +257,15 @@
                 </div>
               </div>
             </div>
-            
+
             <!-- Notices Grid -->
             <div class="notices-grid">
-              <div 
-                v-for="(notice, index) in filteredNotices" 
-                :key="notice.id"
-                class="notice-card"
-                :style="{ '--delay': index * 0.1 + 's' }"
-              >
+              <div v-for="(notice, index) in filteredNotices" :key="notice.id" class="notice-card"
+                :style="{ '--delay': index * 0.1 + 's' }">
                 <div class="notice-background">
                   <div class="notice-pattern"></div>
                 </div>
-                
+
                 <div class="notice-header">
                   <div class="notice-meta">
                     <div class="notice-priority" :class="notice.priority">
@@ -314,59 +280,40 @@
                       </div>
                     </div>
                   </div>
-                  
+
                   <div class="notice-actions">
-                    <button 
-                      class="notice-action-btn bookmark" 
-                      :class="{ active: notice.bookmarked }"
-                      @click="toggleBookmark(notice)"
-                      title="Bookmark"
-                    >
+                    <button class="notice-action-btn bookmark" :class="{ active: notice.bookmarked }"
+                      @click="toggleBookmark(notice)" title="Bookmark">
                       📑
                     </button>
-                    <button 
-                      class="notice-action-btn share"
-                      @click="shareNotice(notice)"
-                      title="Share"
-                    >
+                    <button class="notice-action-btn share" @click="shareNotice(notice)" title="Share">
                       📤
                     </button>
-                    <button 
-                      v-if="authStore.isAdmin"
-                      class="notice-action-btn delete"
-                      @click="deleteNotice(notice)"
-                      title="Delete"
-                    >
+                    <button v-if="authStore.isAdmin" class="notice-action-btn delete" @click="deleteNotice(notice)"
+                      title="Delete">
                       �️
                     </button>
                   </div>
                 </div>
-                
+
                 <div class="notice-content">
                   <p class="notice-text" :class="{ expanded: notice.expanded }">
                     {{ notice.content }}
                   </p>
-                  
-                  <button 
-                    v-if="notice.content.length > 150"
-                    @click="toggleNoticeExpansion(notice)"
-                    class="read-more-btn"
-                  >
+
+                  <button v-if="notice.content.length > 150" @click="toggleNoticeExpansion(notice)"
+                    class="read-more-btn">
                     {{ notice.expanded ? 'Show Less' : 'Read More' }}
                   </button>
                 </div>
-                
+
                 <div class="notice-footer">
                   <div class="notice-tags">
-                    <span 
-                      v-for="tag in notice.tags || []" 
-                      :key="tag"
-                      class="notice-tag"
-                    >
+                    <span v-for="tag in notice.tags || []" :key="tag" class="notice-tag">
                       {{ tag }}
                     </span>
                   </div>
-                  
+
                   <div class="notice-engagement">
                     <button class="engagement-btn">
                       <i class="engagement-icon">👀</i>
@@ -379,7 +326,7 @@
                   </div>
                 </div>
               </div>
-              
+
               <!-- Empty State -->
               <div v-if="filteredNotices.length === 0" class="empty-notices">
                 <div class="empty-illustration">
@@ -389,13 +336,10 @@
                   </div>
                   <h4 class="empty-title">No Announcements Found</h4>
                   <p class="empty-description">
-                    {{ noticeFilter === 'all' ? 'There are no announcements at the moment.' : `No ${noticeFilter} announcements available.` }}
+                    {{ noticeFilter === 'all' ? 'There are no announcements at the moment.' : `No ${noticeFilter}
+                    announcements available.` }}
                   </p>
-                  <button 
-                    v-if="authStore.isAdmin" 
-                    @click="createNotice"
-                    class="empty-action-btn"
-                  >
+                  <button v-if="authStore.isAdmin" @click="createNotice" class="empty-action-btn">
                     ➕ Create First Notice
                   </button>
                 </div>
@@ -427,7 +371,7 @@
                   </div>
                 </div>
               </div>
-              
+
               <div class="profile-details">
                 <div class="detail-row">
                   <span class="detail-label">🆔 Student ID</span>
@@ -456,7 +400,7 @@
                   Your Statistics
                 </h3>
               </div>
-              
+
               <div class="stats-items">
                 <div class="stat-item">
                   <div class="stat-icon">🔥</div>
@@ -492,16 +436,12 @@
               <div class="achievements-section">
                 <h4 class="achievements-title">🏅 Achievements</h4>
                 <div class="achievements-grid">
-                  <div 
-                    v-for="achievement in achievements" 
-                    :key="achievement.id"
-                    class="achievement-item"
-                    :title="achievement.description"
-                  >
+                  <div v-for="achievement in achievements" :key="achievement.id" class="achievement-item"
+                    :title="achievement.description">
                     <div class="achievement-icon">{{ achievement.icon }}</div>
                     <span class="achievement-name">{{ achievement.name }}</span>
                   </div>
-                  
+
                   <div v-if="achievements.length === 0" class="no-achievements">
                     <div class="achievement-icon">🏆</div>
                     <span class="achievement-name">Keep Going!</span>
@@ -558,229 +498,236 @@
                       <span class="status-text">Active</span>
                     </div>
                   </div>
-                
-                <div class="config-form">
-                  <div class="form-grid">
-                    <div class="form-field">
-                      <label class="field-label">🎓 Program/Degree</label>
-                      <select v-model="classConfig.program" class="field-input">
-                        <option value="bachelors">Bachelor's</option>
-                        <option value="masters">Master's</option>
-                        <option value="diploma">Diploma</option>
-                      </select>
-                    </div>
-                    
-                    <div class="form-field">
-                      <label class="field-label">📚 Semester/Year</label>
-                      <select v-model="classConfig.semester" class="field-input">
-                        <option value="1st">1st Semester</option>
-                        <option value="2nd">2nd Semester</option>
-                        <option value="3rd">3rd Semester</option>
-                        <option value="4th">4th Semester</option>
-                        <option value="5th">5th Semester</option>
-                        <option value="6th">6th Semester</option>
-                        <option value="7th">7th Semester</option>
-                        <option value="8th">8th Semester</option>
-                      </select>
-                    </div>
-                    
-                    <div class="form-field">
-                      <label class="field-label">🏫 Section</label>
-                      <input v-model="classConfig.section" type="text" class="field-input" placeholder="e.g., A, B, C" />
-                    </div>
-                    
-                    <div class="form-field">
-                      <label class="field-label">📖 Subject/Course</label>
-                      <input v-model="classConfig.subject" type="text" class="field-input" placeholder="e.g., Computer Science" />
-                    </div>
-                  </div>
-                  
-                  <button @click="saveClassConfig" class="save-btn">
-                    💾 Save Configuration
-                  </button>
-                </div>
-              </div>
 
-              <!-- Time Settings -->
-              <div class="time-card">
-                <div class="card-header">
-                  <h3 class="card-title">
-                    <i class="title-icon">⏰</i>
-                    Time Settings
-                  </h3>
-                  <div class="status-indicator active">Active</div>
-                </div>
-                
-                <div class="time-form">
-                  <div class="time-grid">
-                    <div class="time-field">
-                      <label class="field-label">🕘 Class Start Time</label>
-                      <input v-model="timeSettings.startTime" type="time" class="field-input" />
-                    </div>
-                    
-                    <div class="time-field">
-                      <label class="field-label">⏱️ Grace Period</label>
-                      <div class="input-group">
-                        <input v-model="timeSettings.gracePeriod" type="number" min="0" max="30" class="field-input" />
-                        <span class="input-suffix">minutes</span>
+                  <div class="config-form">
+                    <div class="form-grid">
+                      <div class="form-field">
+                        <label class="field-label">🎓 Program/Degree</label>
+                        <select v-model="classConfig.program" class="field-input">
+                          <option value="bachelors">Bachelor's</option>
+                          <option value="masters">Master's</option>
+                          <option value="diploma">Diploma</option>
+                        </select>
                       </div>
-                    </div>
-                    
-                    <div class="time-field">
-                      <label class="field-label">🚫 Late Cutoff</label>
-                      <input v-model="timeSettings.cutoffTime" type="time" class="field-input" />
-                    </div>
-                    
-                    <div class="time-field">
-                      <label class="field-label">📵 Auto Absent After</label>
-                      <select v-model="timeSettings.autoAbsent" class="field-input">
-                        <option value="30">30 minutes</option>
-                        <option value="60">1 hour</option>
-                        <option value="120">2 hours</option>
-                        <option value="0">Never</option>
-                      </select>
-                    </div>
-                  </div>
-                  
-                  <button @click="saveTimeSettings" class="save-btn">
-                    ⚡ Apply Settings
-                  </button>
-                </div>
-              </div>
-            </div>
 
-            <!-- User Management Section -->
-            <div class="users-section">
-              <div class="users-card">
-                <div class="card-header">
-                  <h3 class="card-title">
-                    <i class="title-icon">👥</i>
-                    Manage Users
-                  </h3>
-                  <div class="card-actions">
-                    <button @click="loadUsers" class="action-btn">🔄 Refresh</button>
-                    <button @click="openUserRegistrationModal" class="action-btn primary">➕ Add User</button>
-                  </div>
-                </div>
-                
-                <div v-if="loadingUsers" class="loading-container">
-                  <div class="loader"></div>
-                  <span>Loading users...</span>
-                </div>
-                
-                <div v-else class="users-table-container">
-                  <table class="users-table" v-if="users.length > 0">
-                    <thead>
-                      <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Type</th>
-                        <th>Class/Section</th>
-                        <th>Face Data</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="user in users" :key="user.id" class="user-row">
-                        <td class="user-id">{{ user.id }}</td>
-                        <td class="user-name">{{ user.name }}</td>
-                        <td class="user-type">
-                          <span class="type-badge" :class="user.type">{{ user.type }}</span>
-                        </td>
-                        <td class="user-class">{{ user.class_section || 'N/A' }}</td>
-                        <td class="user-face-status">
-                          <span class="face-badge" :class="{ 'has-face': user.has_face_data, 'no-face': !user.has_face_data }">
-                            {{ user.has_face_data ? 'Yes' : 'No' }}
-                          </span>
-                        </td>
-                        <td class="user-actions">
-                          <button 
-                            v-if="!user.has_face_data" 
-                            @click="captureUserFace(user)" 
-                            class="action-btn-small capture"
-                            title="Capture Face"
-                          >
-                            📸
-                          </button>
-                          <button 
-                            @click="editUser(user)" 
-                            class="action-btn-small edit"
-                            title="Edit User"
-                          >
-                            ✏️
-                          </button>
-                          <button 
-                            @click="deleteUser(user)" 
-                            class="action-btn-small delete"
-                            title="Delete User"
-                          >
-                            🗑️
-                          </button>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                  
-                  <div v-else class="empty-users">
-                    <div class="empty-illustration">
-                      <i class="empty-icon">👥</i>
-                      <h4>No Users Found</h4>
-                      <p>Add users to see them listed here</p>
-                      <button @click="openUserRegistrationModal" class="add-user-btn">➕ Add First User</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+                      <div class="form-field">
+                        <label class="field-label">📚 Semester/Year</label>
+                        <select v-model="classConfig.semester" class="field-input">
+                          <option value="1st">1st Semester</option>
+                          <option value="2nd">2nd Semester</option>
+                          <option value="3rd">3rd Semester</option>
+                          <option value="4th">4th Semester</option>
+                          <option value="5th">5th Semester</option>
+                          <option value="6th">6th Semester</option>
+                          <option value="7th">7th Semester</option>
+                          <option value="8th">8th Semester</option>
+                        </select>
+                      </div>
 
-            <!-- Active Classes -->
-            <div class="classes-section">
-              <div class="classes-card">
-                <div class="card-header">
-                  <h3 class="card-title">
-                    <i class="title-icon">🏫</i>
-                    Today's Classes
-                  </h3>
-                  <div class="card-actions">
-                    <button @click="refreshClasses" class="action-btn">🔄</button>
-                    <button class="action-btn primary">➕ Add Class</button>
-                  </div>
-                </div>
-                
-                <div class="classes-grid">
-                  <div v-for="cls in activeClasses" :key="cls.id" class="class-card">
-                    <div class="class-header">
-                      <div class="class-info">
-                        <h4 class="class-name">{{ cls.name }}</h4>
-                        <p class="class-details">{{ cls.program }} {{ cls.semester }} - Section {{ cls.section }}</p>
+                      <div class="form-field">
+                        <label class="field-label">🏫 Section</label>
+                        <input v-model="classConfig.section" type="text" class="field-input"
+                          placeholder="e.g., A, B, C" />
                       </div>
-                      <div class="class-status" :class="getClassStatus(cls)">
-                        {{ getClassStatusText(cls) }}
+
+                      <div class="form-field">
+                        <label class="field-label">📖 Subject/Course</label>
+                        <input v-model="classConfig.subject" type="text" class="field-input"
+                          placeholder="e.g., Computer Science" />
                       </div>
                     </div>
-                    
-                    <div class="class-time">
-                      <span class="time-range">{{ cls.startTime }} - {{ cls.endTime }}</span>
-                    </div>
-                    
-                    <div class="class-attendance">
-                      <div class="attendance-bar">
-                        <div class="attendance-fill" :style="{ width: cls.rate + '%' }"></div>
-                      </div>
-                      <span class="attendance-text">{{ cls.present }}/{{ cls.total }} ({{ cls.rate }}%)</span>
-                    </div>
-                    
-                    <button @click="openAttendance(cls)" class="class-action-btn">
-                      📋 Take Attendance
+
+                    <button @click="saveClassConfig" class="save-btn">
+                      💾 Save Configuration
                     </button>
                   </div>
-                  
-                  <div v-if="activeClasses.length === 0" class="empty-classes">
-                    <div class="empty-illustration">
-                      <i class="empty-icon">🏫</i>
-                      <h4>No Active Classes</h4>
-                      <p>Set up class schedules to see them here</p>
-                      <button class="setup-btn">⚙️ Setup Classes</button>
+                </div>
+
+                <!-- Time Settings -->
+                <div class="time-card">
+                  <div class="card-header">
+                    <h3 class="card-title">
+                      <i class="title-icon">⏰</i>
+                      Time Settings
+                    </h3>
+                    <div class="status-indicator active">Active</div>
+                  </div>
+
+                  <div class="time-form">
+                    <div class="time-grid">
+                      <div class="time-field">
+                        <label class="field-label">🕘 Class Start Time</label>
+                        <input v-model="timeSettings.startTime" type="time" class="field-input" />
+                      </div>
+
+                      <div class="time-field">
+                        <label class="field-label">⏱️ Grace Period</label>
+                        <div class="input-group">
+                          <input v-model="timeSettings.gracePeriod" type="number" min="0" max="30"
+                            class="field-input" />
+                          <span class="input-suffix">minutes</span>
+                        </div>
+                      </div>
+
+                      <div class="time-field">
+                        <label class="field-label">🚫 Late Cutoff</label>
+                        <input v-model="timeSettings.cutoffTime" type="time" class="field-input" />
+                      </div>
+
+                      <div class="time-field">
+                        <label class="field-label">📵 Auto Absent After</label>
+                        <select v-model="timeSettings.autoAbsent" class="field-input">
+                          <option value="30">30 minutes</option>
+                          <option value="60">1 hour</option>
+                          <option value="120">2 hours</option>
+                          <option value="0">Never</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <button @click="saveTimeSettings" class="save-btn">
+                      ⚡ Apply Settings
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- User Management Section -->
+              <div class="users-section">
+                <div class="users-card">
+                  <div class="card-header">
+                    <h3 class="card-title">
+                      <i class="title-icon">👥</i>
+                      Manage Users
+                    </h3>
+                    <div class="card-actions">
+                      <button @click="loadUsers" class="action-btn">🔄 Refresh</button>
+                      <button @click="openUserRegistrationModal" class="action-btn primary">➕ Add User</button>
+                    </div>
+                  </div>
+
+                  <div v-if="loadingUsers" class="loading-container">
+                    <div class="loader"></div>
+                    <span>Loading users...</span>
+                  </div>
+
+                  <div v-else class="users-table-container">
+                    <table class="users-table" v-if="users.length > 0">
+                      <thead>
+                        <tr>
+                          <th>ID</th>
+                          <th>Name</th>
+                          <th>Type</th>
+                          <th>Class/Section</th>
+                          <th>Face Data</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="user in users" :key="user.id" class="user-row">
+                          <td class="user-id">{{ user.id }}</td>
+                          <td class="user-name">{{ user.name }}</td>
+                          <td class="user-type">
+                            <span class="type-badge" :class="user.type">{{ user.type }}</span>
+                          </td>
+                          <td class="user-class">{{ user.class_section || 'N/A' }}</td>
+                          <td class="user-face-status">
+                            <span class="face-badge"
+                              :class="{ 'has-face': user.has_face_data, 'no-face': !user.has_face_data }">
+                              {{ user.has_face_data ? 'Yes' : 'No' }}
+                            </span>
+                          </td>
+                          <td class="user-actions">
+                            <button v-if="!user.has_face_data" @click="captureUserFace(user)"
+                              class="action-btn-small capture" title="Capture Face">
+                              📸
+                            </button>
+                            <button @click="editUser(user)" class="action-btn-small edit" title="Edit User">
+                              ✏️
+                            </button>
+                            <button @click="deleteUser(user)" class="action-btn-small delete" title="Delete User">
+                              🗑️
+                            </button>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+
+                    <div v-else class="empty-users">
+                      <div class="empty-illustration enhanced-empty-users">
+                        <div class="empty-icon-bg"></div>
+                        <i class="empty-icon">👥</i>
+                        <h4 class="empty-title">No Users Found</h4>
+                        <p class="empty-description">Add users to see them listed here.</p>
+                        <button @click="openUserRegistrationModal" class="add-user-btn enhanced-add-user-btn" style="
+                        background: linear-gradient(135deg, #4ecdc4, #45b7d1);
+                        color: white;
+                        border: none;
+                        padding: 1.25rem 2.5rem;
+                        border-radius: 18px;
+                        font-weight: 700;
+                        font-size: 1rem;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                        box-shadow: 0 6px 20px rgba(78, 205, 196, 0.3);
+                      " @mouseover="handleAddUserMouseOver" @mouseout="handleAddUserMouseOut">
+                          ➕ Add First User
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Active Classes -->
+              <div class="classes-section">
+                <div class="classes-card">
+                  <div class="card-header">
+                    <h3 class="card-title">
+                      <i class="title-icon">🏫</i>
+                      Today's Classes
+                    </h3>
+                    <div class="card-actions">
+                      <button @click="refreshClasses" class="action-btn">🔄</button>
+                      <button class="action-btn primary">➕ Add Class</button>
+                    </div>
+                  </div>
+
+                  <div class="classes-grid">
+                    <div v-for="cls in activeClasses" :key="cls.id" class="class-card">
+                      <div class="class-header">
+                        <div class="class-info">
+                          <h4 class="class-name">{{ cls.name }}</h4>
+                          <p class="class-details">{{ cls.program }} {{ cls.semester }} - Section {{ cls.section }}</p>
+                        </div>
+                        <div class="class-status" :class="getClassStatus(cls)">
+                          {{ getClassStatusText(cls) }}
+                        </div>
+                      </div>
+
+                      <div class="class-time">
+                        <span class="time-range">{{ cls.startTime }} - {{ cls.endTime }}</span>
+                      </div>
+
+                      <div class="class-attendance">
+                        <div class="attendance-bar">
+                          <div class="attendance-fill" :style="{ width: cls.rate + '%' }"></div>
+                        </div>
+                        <span class="attendance-text">{{ cls.present }}/{{ cls.total }} ({{ cls.rate }}%)</span>
+                      </div>
+
+                      <button @click="openAttendance(cls)" class="class-action-btn">
+                        📋 Take Attendance
+                      </button>
+                    </div>
+
+                    <div v-if="activeClasses.length === 0" class="empty-classes">
+                      <div class="empty-illustration">
+                        <i class="empty-icon">🏫</i>
+                        <h4>No Active Classes</h4>
+                        <p>Set up class schedules to see them here</p>
+                        <button class="setup-btn">⚙️ Setup Classes</button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -788,24 +735,15 @@
             </div>
           </div>
         </div>
-        </div>
       </main>
     </div>
 
     <!-- Enhanced Camera Modal -->
-    <CameraModal 
-      :show="showCameraModal" 
-      @close="closeCameraModal"
-      @success="onAttendanceSuccess"
-    />
+    <CameraModal :show="showCameraModal" @close="closeCameraModal" @success="onAttendanceSuccess" />
 
     <!-- User Registration Modal -->
-    <UserRegistrationModal 
-      :show="showUserRegistrationModal" 
-      :existing-user="transformedUserToCapture"
-      @close="closeUserRegistrationModal"
-      @success="onUserRegistrationSuccess"
-    />
+    <UserRegistrationModal :show="showUserRegistrationModal" :existing-user="transformedUserToCapture"
+      @close="closeUserRegistrationModal" @success="onUserRegistrationSuccess" />
 
     <!-- Chart Tooltip -->
     <div v-if="chartTooltip.show" class="chart-tooltip" :style="chartTooltip.style">
@@ -1093,7 +1031,7 @@ const getStatsConfig = computed(() => {
 const filteredNotices = computed(() => {
   const now = new Date()
   const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-  
+
   switch (noticeFilter.value) {
     case 'recent':
       return notices.value.filter(notice => new Date(notice.created_at) >= oneWeekAgo)
@@ -1107,7 +1045,7 @@ const filteredNotices = computed(() => {
 // Transform user object for UserRegistrationModal compatibility
 const transformedUserToCapture = computed(() => {
   if (!userToCapture.value) return null
-  
+
   return {
     id: userToCapture.value.id.toString(),
     name: userToCapture.value.name,
@@ -1175,7 +1113,7 @@ const getClassStatus = (cls: any) => {
   const now = new Date()
   const startTime = new Date(`${now.toDateString()} ${cls.startTime}`)
   const endTime = new Date(`${now.toDateString()} ${cls.endTime}`)
-  
+
   if (now < startTime) return 'upcoming'
   if (now > endTime) return 'completed'
   return 'active'
@@ -1228,10 +1166,10 @@ const closeUserRegistrationModal = () => {
 const onAttendanceSuccess = async (message: string) => {
   // Show success message
   alert(message)
-  
+
   // Reload user data to update stats
   await loadUserData()
-  
+
   // Close modal
   closeCameraModal()
 }
@@ -1239,12 +1177,12 @@ const onAttendanceSuccess = async (message: string) => {
 const onUserRegistrationSuccess = async (message: string) => {
   // Show success message
   alert(message)
-  
+
   // Reload admin data to update stats
   if (authStore.isAdmin) {
     await loadDashboardData()
   }
-  
+
   // Close modal
   closeUserRegistrationModal()
 }
@@ -1253,14 +1191,14 @@ const onUserRegistrationSuccess = async (message: string) => {
 const loadUserData = async () => {
   try {
     isLoading.value = true
-    
+
     // Load real-time dashboard stats with percentage changes
     await loadDashboardStats()
-    
+
     // Load user attendance data
     const attendanceResponse = await userAPI.getMyAttendance()
     const attendanceData = attendanceResponse.data
-    
+
     // Calculate personal stats
     personalStats.value = {
       totalDays: attendanceData.total_days || 0,
@@ -1278,7 +1216,7 @@ const loadUserData = async () => {
         bestMonth: profileResponse.data.best_month || 'N/A',
         avgDailyTime: profileResponse.data.avg_daily_time || '0h 0m'
       }
-      
+
       // Load achievements from profile
       if (profileResponse.data.achievements) {
         achievements.value = profileResponse.data.achievements
@@ -1303,12 +1241,12 @@ const loadUserData = async () => {
         if (analyticsResponse.data.monthly_trend) {
           attendanceChart.value = analyticsResponse.data.monthly_trend
         }
-        
+
         // Weekly pattern
         if (analyticsResponse.data.weekly_pattern) {
           weeklyPattern.value = analyticsResponse.data.weekly_pattern
         }
-        
+
         // Recent activity from analytics
         if (analyticsResponse.data.recent_activity) {
           recentActivity.value = analyticsResponse.data.recent_activity
@@ -1347,17 +1285,17 @@ const loadDashboardData = async () => {
   try {
     isLoading.value = true
     dashboardStore.setLoading(true)
-    
+
     // Load real-time dashboard stats with percentage changes
     await loadDashboardStats()
-    
+
     // Load admin stats
     const statsResponse = await dashboardAPI.getStats()
     dashboardStore.setStats(statsResponse.data)
-    
+
     // For admin, show all users' attendance, not their own
     attendanceData.value = statsResponse.data.attendance_data || []
-    
+
     // Set admin stats differently
     personalStats.value = {
       totalDays: statsResponse.data.total_registered || 0,
@@ -1365,12 +1303,12 @@ const loadDashboardData = async () => {
       attendanceRate: Math.round((statsResponse.data.today_attendance / Math.max(statsResponse.data.total_registered, 1)) * 100),
       thisMonth: statsResponse.data.students_present + statsResponse.data.employees_present || 0
     }
-    
+
     // Load notices
     const noticesResponse = await adminAPI.getNotices()
     dashboardStore.setNotices(noticesResponse.data.notices || [])
     notices.value = noticesResponse.data.notices || []
-    
+
     // Load system analytics data
     try {
       const analyticsResponse = await adminAPI.getAnalytics()
@@ -1379,12 +1317,12 @@ const loadDashboardData = async () => {
         if (analyticsResponse.data.monthly_trend) {
           attendanceChart.value = analyticsResponse.data.monthly_trend
         }
-        
+
         // System-wide weekly pattern
         if (analyticsResponse.data.weekly_pattern) {
           weeklyPattern.value = analyticsResponse.data.weekly_pattern
         }
-        
+
         // System-wide recent activity (all users)
         if (analyticsResponse.data.recent_system_activity) {
           recentActivity.value = analyticsResponse.data.recent_system_activity
@@ -1404,7 +1342,7 @@ const loadDashboardData = async () => {
         { name: 'Sun', percentage: 0 }
       ]
     }
-    
+
     // Load recent system activity if not in analytics
     if (recentActivity.value.length === 0) {
       try {
@@ -1423,10 +1361,10 @@ const loadDashboardData = async () => {
       console.error('Error loading active classes:', error)
       activeClasses.value = []
     }
-    
+
     // Load users for admin
     await loadUsers()
-    
+
   } catch (error) {
     console.error('Error loading dashboard data:', error)
   } finally {
@@ -1459,7 +1397,7 @@ const refreshActivity = async () => {
 // User management methods
 const loadUsers = async () => {
   if (!authStore.isAdmin) return
-  
+
   try {
     loadingUsers.value = true
     const response = await adminAPI.getUsers()
@@ -1496,11 +1434,11 @@ const deleteUser = async (user: User) => {
   if (!confirm(`Are you sure you want to delete user "${user.name}"? This action cannot be undone.`)) {
     return
   }
-  
+
   try {
     await adminAPI.deleteUser(user.id.toString())
     alert('User deleted successfully!')
-    
+
     // Reload users list
     await loadUsers()
   } catch (error: any) {
@@ -1552,7 +1490,7 @@ const shareNotice = (notice: Notice) => {
 
 const deleteNotice = async (notice: Notice) => {
   if (!confirm('Are you sure you want to delete this notice?')) return
-  
+
   try {
     await adminAPI.deleteNotice(notice.id.toString())
     notices.value = notices.value.filter(n => n.id !== notice.id)
@@ -1622,12 +1560,12 @@ const loadDashboardStats = async () => {
   try {
     // Store previous stats for comparison
     previousDashboardStats.value = { ...dashboardStats.value }
-    
+
     if (authStore.isAdmin) {
       // Load admin stats
       const response = await dashboardAPI.getStats()
       const data = response.data
-      
+
       dashboardStats.value = {
         totalUsers: data.total_users || 0,
         totalPresent: data.present_today || 0,
@@ -1638,7 +1576,7 @@ const loadDashboardStats = async () => {
       // Load user-specific stats
       const response = await userAPI.getMyAnalytics()
       const data = response.data
-      
+
       dashboardStats.value = {
         totalUsers: data.total_classmates || personalStats.value.totalDays,
         totalPresent: data.present_today || personalStats.value.attendedDays,
@@ -1646,7 +1584,7 @@ const loadDashboardStats = async () => {
         attendanceRate: data.attendance_rate || personalStats.value.attendanceRate
       }
     }
-    
+
     // Calculate percentage changes
     statsPercentageChanges.value = {
       totalUsers: calculatePercentageChange(dashboardStats.value.totalUsers, previousDashboardStats.value.totalUsers),
@@ -1657,6 +1595,16 @@ const loadDashboardStats = async () => {
   } catch (error) {
     console.error('Error loading dashboard stats:', error)
   }
+}
+
+// Add event handlers for Add User button hover
+const handleAddUserMouseOver = (e: MouseEvent) => {
+  const target = e.target as HTMLElement
+  target.style.background = 'linear-gradient(135deg, #45b7d1, #3b9dd8)'
+}
+const handleAddUserMouseOut = (e: MouseEvent) => {
+  const target = e.target as HTMLElement
+  target.style.background = 'linear-gradient(135deg, #4ecdc4, #45b7d1)'
 }
 
 // Load data when component mounts
@@ -1743,10 +1691,23 @@ onMounted(() => {
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  25% { transform: translateY(-20px) rotate(90deg); }
-  50% { transform: translateY(10px) rotate(180deg); }
-  75% { transform: translateY(-15px) rotate(270deg); }
+
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+
+  25% {
+    transform: translateY(-20px) rotate(90deg);
+  }
+
+  50% {
+    transform: translateY(10px) rotate(180deg);
+  }
+
+  75% {
+    transform: translateY(-15px) rotate(270deg);
+  }
 }
 
 .grid-overlay {
@@ -1755,7 +1716,7 @@ onMounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background-image: 
+  background-image:
     linear-gradient(rgba(78, 205, 196, 0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(78, 205, 196, 0.03) 1px, transparent 1px);
   background-size: 50px 50px;
@@ -1763,8 +1724,13 @@ onMounted(() => {
 }
 
 @keyframes gridMove {
-  0% { transform: translate(0, 0); }
-  100% { transform: translate(50px, 50px); }
+  0% {
+    transform: translate(0, 0);
+  }
+
+  100% {
+    transform: translate(50px, 50px);
+  }
 }
 
 /* Dashboard Container */
@@ -1776,7 +1742,7 @@ onMounted(() => {
   padding: 2rem;
 }
 
-/* Ultra Modern Header */
+/* Ultra Modern Header - Responsive */
 .dashboard-header {
   background: rgba(255, 255, 255, 0.02);
   backdrop-filter: blur(20px);
@@ -1805,6 +1771,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   gap: 2rem;
+  flex-wrap: wrap;
 }
 
 .user-greeting {
@@ -1860,13 +1827,29 @@ onMounted(() => {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.7; transform: scale(1.05); }
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
 }
 
 @keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
 }
 
 .greeting-text {
@@ -1884,6 +1867,8 @@ onMounted(() => {
   animation: gradientFlow 4s ease-in-out infinite;
   margin-bottom: 0.5rem;
   line-height: 1.2;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .role-subtitle {
@@ -2069,6 +2054,7 @@ onMounted(() => {
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -2240,8 +2226,15 @@ onMounted(() => {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Content Grid */
@@ -2250,7 +2243,65 @@ onMounted(() => {
   grid-template-columns: 1fr 1fr;
   gap: 2rem;
   margin-bottom: 3rem;
-  margin-bottom: 3rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 1024px) {
+  .content-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .chart-panel,
+  .heatmap-panel,
+  .timeline-panel {
+    padding: 1.5rem;
+    border-radius: 18px;
+  }
+}
+
+@media (max-width: 768px) {
+  .content-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .chart-panel,
+  .heatmap-panel,
+  .timeline-panel {
+    padding: 1rem;
+    border-radius: 14px;
+  }
+
+  .panel-header {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem 1rem 0.5rem;
+  }
+
+  .panel-title {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .content-grid {
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .chart-panel,
+  .heatmap-panel,
+  .timeline-panel {
+    padding: 0.5rem;
+    border-radius: 10px;
+  }
+
+  .panel-title {
+    font-size: 0.85rem;
+  }
 }
 
 /* Panel Styles */
@@ -2347,8 +2398,13 @@ onMounted(() => {
 }
 
 @keyframes chartGrow {
-  from { height: 0; }
-  to { height: var(--final-height); }
+  from {
+    height: 0;
+  }
+
+  to {
+    height: var(--final-height);
+  }
 }
 
 .chart-column:hover {
@@ -2663,6 +2719,95 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
+@media (max-width: 1024px) {
+  .notices-actions {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .admin-actions {
+    flex-direction: row;
+    gap: 0.75rem;
+  }
+
+  .notices-filters[data-v-336c5134] {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    flex-direction: row;
+  }
+
+  .welcome-title[data-v-336c5134] {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .notices-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .admin-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: stretch;
+  }
+
+  .create-notice-btn {
+    width: 100%;
+    justify-content: center;
+    font-size: 0.9rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .notices-filters {
+    gap: 0.5rem;
+    padding: 0.5rem;
+    align-items: stretch;
+  }
+
+  .filter-btn {
+    width: 100%;
+    text-align: center;
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .notices-actions {
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .admin-actions {
+    gap: 0.25rem;
+  }
+
+  .create-notice-btn {
+    font-size: 0.85rem;
+    padding: 0.5rem 0.5rem;
+    border-radius: 12px;
+  }
+
+  .notices-filters {
+    padding: 0.25rem;
+    border-radius: 12px;
+  }
+
+  .filter-btn {
+    font-size: 0.8rem;
+    padding: 0.5rem 0.5rem;
+    border-radius: 10px;
+  }
+}
+
 .notices-filters {
   display: flex;
   gap: 0.5rem;
@@ -2805,9 +2950,22 @@ onMounted(() => {
 }
 
 @keyframes floatPattern {
-  0%, 100% { transform: rotate(0deg) translateY(0px); opacity: 0.6; }
-  33% { transform: rotate(120deg) translateY(-30px); opacity: 0.8; }
-  66% { transform: rotate(240deg) translateY(-15px); opacity: 0.4; }
+
+  0%,
+  100% {
+    transform: rotate(0deg) translateY(0px);
+    opacity: 0.6;
+  }
+
+  33% {
+    transform: rotate(120deg) translateY(-30px);
+    opacity: 0.8;
+  }
+
+  66% {
+    transform: rotate(240deg) translateY(-15px);
+    opacity: 0.4;
+  }
 }
 
 .notice-header {
@@ -2871,11 +3029,14 @@ onMounted(() => {
 }
 
 @keyframes urgentPulse {
-  0%, 100% { 
+
+  0%,
+  100% {
     box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
     transform: scale(1);
   }
-  50% { 
+
+  50% {
     box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5);
     transform: scale(1.05);
   }
@@ -4091,11 +4252,11 @@ onMounted(() => {
   .notices-grid {
     grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
   }
-  
+
   .management-grid {
     grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
   }
-  
+
   .profile-layout {
     grid-template-columns: 1fr 350px;
   }
@@ -4105,25 +4266,25 @@ onMounted(() => {
   .dashboard-container {
     padding: 1.5rem;
   }
-  
+
   .notices-grid {
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   }
-  
+
   .management-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .profile-layout {
     grid-template-columns: 1fr;
     gap: 2rem;
   }
-  
+
   .header-stats {
     flex-direction: column;
     gap: 1.5rem;
   }
-  
+
   .quick-stat {
     min-width: auto;
   }
@@ -4135,35 +4296,34 @@ onMounted(() => {
     align-items: flex-start;
     gap: 1.5rem;
   }
-  
+
   .notices-actions {
     width: 100%;
-    flex-direction: row;
     justify-content: space-between;
     align-items: center;
   }
-  
+
   .management-header .header-content {
     flex-direction: column;
     align-items: flex-start;
     gap: 1.5rem;
   }
-  
+
   .header-stats {
     width: 100%;
     flex-direction: row;
     justify-content: space-between;
   }
-  
+
   .form-grid,
   .time-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .users-table-container {
     overflow-x: auto;
   }
-  
+
   .users-table {
     min-width: 600px;
   }
@@ -4173,71 +4333,71 @@ onMounted(() => {
   .dashboard-container {
     padding: 1rem;
   }
-  
+
   .notices-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .notice-card {
     padding: 2rem;
   }
-  
+
   .management-header,
   .notices-container {
     padding: 2rem;
   }
-  
+
   .profile-header {
     flex-direction: column;
     text-align: center;
     gap: 2rem;
     padding: 2rem;
   }
-  
+
   .profile-name {
     font-size: 2rem;
   }
-  
+
   .avatar-circle-large {
     width: 120px;
     height: 120px;
     font-size: 2.5rem;
   }
-  
+
   .notices-header {
     text-align: center;
   }
-  
+
   .notice-meta {
     flex-direction: column;
     gap: 1rem;
     align-items: center;
     text-align: center;
   }
-  
+
   .notice-actions {
     margin-top: 1rem;
     justify-content: center;
   }
-  
+
   .achievements-grid {
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   }
-  
+
   .header-stats {
     flex-direction: column;
     gap: 1rem;
   }
-  
+
   .quick-stat {
     padding: 1.25rem 1.5rem;
   }
-  
+
   .card-actions {
     flex-direction: column;
     gap: 0.75rem;
   }
-  
+
   .action-btn {
     text-align: center;
   }
@@ -4247,156 +4407,165 @@ onMounted(() => {
   .dashboard-container {
     padding: 0.75rem;
   }
-  
+
   .notices-container,
   .management-header {
     padding: 1.5rem;
     border-radius: 20px;
   }
-  
+
   .notice-card {
     padding: 1.5rem;
     border-radius: 16px;
   }
-  
+
   .notices-title,
   .management-header .section-title {
     font-size: 1.5rem;
   }
-  
+
   .title-icon-wrapper {
     width: 50px;
     height: 50px;
   }
-  
+
   .title-icon-wrapper .title-icon {
     font-size: 2rem;
   }
-  
+
   .profile-header {
     padding: 1.5rem;
   }
-  
+
   .profile-name {
     font-size: 1.75rem;
   }
-  
+
   .avatar-circle-large {
     width: 100px;
     height: 100px;
     font-size: 2rem;
   }
-  
+
   .notices-filters {
-    flex-direction: column;
     gap: 0.5rem;
     padding: 0.5rem;
   }
-  
+
   .filter-btn {
     text-align: center;
     padding: 0.75rem 1.25rem;
   }
-  
+
   .notice-footer {
     flex-direction: column;
     gap: 1rem;
     align-items: flex-start;
   }
-  
+
   .notice-engagement {
     justify-content: center;
     width: 100%;
   }
-  
+
   .form-grid,
   .time-grid {
     gap: 1rem;
   }
-  
+
   .field-input {
     padding: 0.875rem 1rem;
   }
-  
+
   .save-btn {
     padding: 1rem 2rem;
     font-size: 0.95rem;
   }
-  
+
   .stats-items {
     padding: 2rem;
     gap: 1.5rem;
   }
-  
+
   .stat-item {
     padding: 1.25rem;
     flex-direction: column;
     text-align: center;
     gap: 1rem;
   }
-  
+
   .stat-icon {
     width: 60px;
     height: 60px;
     font-size: 1.5rem;
   }
-  
+
   .achievements-grid {
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
   }
-  
+
   .achievement-item {
     padding: 1.5rem 1rem;
   }
-  
+
   .users-table th,
   .users-table td {
     padding: 1rem 0.5rem;
     font-size: 0.85rem;
   }
-  
+
   .action-btn-small {
     min-width: 32px;
     height: 32px;
     padding: 0.5rem;
     font-size: 0.9rem;
   }
+
+  .content-grid[data-v-336c5134] {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .panel-title {
+    font-size: 0.75rem;
+  }
+
 }
 
 @media (max-width: 360px) {
   .notices-grid {
     gap: 1.5rem;
   }
-  
+
   .notice-card {
     padding: 1.25rem;
   }
-  
+
   .notices-title {
     font-size: 1.25rem;
     flex-direction: column;
     gap: 0.5rem;
     text-align: center;
   }
-  
+
   .profile-name {
     font-size: 1.5rem;
   }
-  
+
   .avatar-circle-large {
     width: 80px;
     height: 80px;
     font-size: 1.5rem;
   }
-  
+
   .management-grid {
     gap: 1.5rem;
   }
-  
+
   .quick-stat {
     padding: 1rem;
   }
-  
+
   .quick-stat .stat-number {
     font-size: 1.5rem;
   }
@@ -4404,13 +4573,27 @@ onMounted(() => {
 
 /* Animation Keyframes */
 @keyframes gradientFlow {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes slideInUp {
@@ -4418,6 +4601,7 @@ onMounted(() => {
     opacity: 0;
     transform: translateY(50px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -4425,8 +4609,13 @@ onMounted(() => {
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Loading States */
@@ -4477,3 +4666,398 @@ onMounted(() => {
   font-weight: 500;
 }
 </style>
+
+/* ===== RESPONSIVE HEADER FIXES ===== */
+
+/* Tablet and smaller screens */
+@media (max-width: 1024px) {
+.dashboard-header {
+padding: 1.5rem;
+margin-bottom: 2rem;
+border-radius: 20px;
+}
+
+.header-content {
+gap: 1.5rem;
+}
+
+.welcome-title {
+font-size: 2rem;
+}
+
+.avatar-circle {
+width: 60px;
+height: 60px;
+}
+
+.avatar-text {
+font-size: 1.25rem;
+}
+
+.stats-preview {
+gap: 0.75rem;
+}
+
+.stat-mini {
+min-width: 60px;
+padding: 0.5rem;
+}
+
+.primary-action-btn {
+padding: 0.75rem 1.5rem;
+}
+}
+
+/* Mobile landscape and tablet portrait */
+@media (max-width: 768px) {
+.dashboard-header {
+padding: 1.25rem;
+margin-bottom: 1.5rem;
+border-radius: 16px;
+}
+
+.header-content {
+flex-direction: column;
+align-items: stretch;
+gap: 1.5rem;
+}
+
+.user-greeting {
+flex-direction: column;
+align-items: center;
+text-align: center;
+gap: 1rem;
+}
+
+.greeting-text {
+width: 100%;
+}
+
+.welcome-title {
+font-size: 1.75rem;
+text-align: center;
+line-height: 1.3;
+}
+
+.role-subtitle {
+justify-content: center;
+flex-wrap: wrap;
+gap: 0.75rem;
+}
+
+.header-actions {
+align-items: center;
+width: 100%;
+}
+
+.stats-preview {
+width: 100%;
+justify-content: center;
+margin-bottom: 1rem;
+}
+
+.action-buttons {
+width: 100%;
+justify-content: center;
+flex-wrap: wrap;
+gap: 0.75rem;
+}
+
+.primary-action-btn {
+flex: 1;
+min-width: 200px;
+max-width: 300px;
+justify-content: center;
+}
+
+.secondary-action-btn {
+width: 48px;
+height: 48px;
+border-radius: 50%;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+}
+
+/* Mobile portrait */
+@media (max-width: 480px) {
+.dashboard-header {
+padding: 1rem;
+margin-bottom: 1rem;
+border-radius: 12px;
+}
+
+.header-content {
+gap: 1rem;
+}
+
+.user-greeting {
+gap: 0.75rem;
+}
+
+.avatar-circle {
+width: 50px;
+height: 50px;
+}
+
+.avatar-text {
+font-size: 1rem;
+}
+
+.online-indicator {
+width: 12px;
+height: 12px;
+border-width: 2px;
+}
+
+.welcome-title {
+font-size: 1.5rem;
+line-height: 1.4;
+}
+
+.role-subtitle {
+font-size: 0.875rem;
+gap: 0.5rem;
+}
+
+.role-chip {
+padding: 0.375rem 0.75rem;
+font-size: 0.75rem;
+border-radius: 16px;
+}
+
+.date-display {
+font-size: 0.75rem;
+}
+
+.stats-preview {
+gap: 0.5rem;
+}
+
+.stat-mini {
+min-width: 50px;
+padding: 0.5rem 0.375rem;
+}
+
+.stat-number {
+font-size: 1rem;
+}
+
+.stat-text {
+font-size: 0.625rem;
+}
+
+.action-buttons {
+flex-direction: column;
+gap: 0.5rem;
+}
+
+.primary-action-btn {
+width: 100%;
+min-width: auto;
+max-width: none;
+padding: 1rem;
+font-size: 0.875rem;
+}
+
+.btn-text {
+font-size: 0.875rem;
+}
+
+.secondary-action-btn {
+width: 100%;
+height: 44px;
+border-radius: 12px;
+font-size: 1.25rem;
+}
+}
+
+/* Very small screens */
+@media (max-width: 360px) {
+.dashboard-header {
+padding: 0.75rem;
+}
+
+.welcome-title {
+font-size: 1.25rem;
+word-break: break-word;
+hyphens: auto;
+}
+
+.role-subtitle {
+flex-direction: column;
+align-items: center;
+gap: 0.375rem;
+}
+
+.stats-preview {
+flex-direction: column;
+gap: 0.375rem;
+}
+
+.stat-mini {
+width: 100%;
+display: flex;
+justify-content: space-between;
+align-items: center;
+padding: 0.5rem 0.75rem;
+}
+
+.stat-number {
+font-size: 1.125rem;
+}
+
+.stat-text {
+font-size: 0.75rem;
+}
+}
+
+/* Landscape orientation on mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+.dashboard-header {
+padding: 1rem 1.25rem;
+}
+
+.header-content {
+flex-direction: row;
+align-items: center;
+}
+
+.user-greeting {
+flex-direction: row;
+text-align: left;
+flex: 1;
+}
+
+.welcome-title {
+font-size: 1.5rem;
+text-align: left;
+}
+
+.role-subtitle {
+justify-content: flex-start;
+}
+
+.header-actions {
+flex-direction: row;
+align-items: center;
+width: auto;
+}
+
+.stats-preview {
+margin-bottom: 0;
+margin-right: 1rem;
+}
+
+.action-buttons {
+flex-direction: row;
+width: auto;
+}
+
+.primary-action-btn {
+flex: none;
+min-width: 160px;
+}
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+.dashboard-header::before {
+height: 1px;
+}
+
+.avatar-ring {
+border-width: 1px;
+}
+
+.online-indicator {
+border-width: 2px;
+}
+}
+
+/* Accessibility - Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+.welcome-title,
+.avatar-ring,
+.online-indicator,
+.pulse-effect {
+animation: none !important;
+}
+
+.primary-action-btn:hover,
+.secondary-action-btn:hover {
+transform: none !important;
+}
+}
+
+/* Dark mode adjustments for header */
+@media (prefers-color-scheme: light) {
+.dashboard-header {
+background: rgba(0, 0, 0, 0.02);
+border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.welcome-title {
+background: linear-gradient(135deg, #8A2BE2, #4ecdc4, #45b7d1, #96ceb4, #feca57);
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+background-clip: text;
+}
+
+.role-subtitle {
+color: rgba(0, 0, 0, 0.8);
+}
+
+.date-display {
+color: rgba(0, 0, 0, 0.6);
+}
+
+.stat-number {
+color: #1a1a2e;
+}
+
+.stat-text {
+color: rgba(0, 0, 0, 0.7);
+}
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+.primary-action-btn,
+.secondary-action-btn {
+min-height: 48px;
+touch-action: manipulation;
+}
+
+.primary-action-btn:active {
+transform: scale(0.98);
+}
+
+.secondary-action-btn:active {
+transform: scale(0.95);
+}
+
+.stat-mini {
+min-height: 44px;
+}
+}
+
+/* Container width adjustments */
+@media (max-width: 1200px) {
+.dashboard-container {
+padding: 0 1.5rem;
+}
+}
+
+@media (max-width: 768px) {
+.dashboard-container {
+padding: 0 1rem;
+}
+}
+
+@media (max-width: 480px) {
+.dashboard-container {
+padding: 0 0.75rem;
+}
+}
