@@ -73,7 +73,7 @@
               <div class="demo-creds">
                 <div class="cred-item">
                   <span class="cred-label">Username:</span>
-                  <code class="cred-value" @click="copyToClipboard('demo_user')">demo_user</code>
+                  <code class="cred-value" @click="copyToClipboard('alice.johnson')">alice.johnson</code>
                 </div>
                 <div class="cred-item">
                   <span class="cred-label">Password:</span>
@@ -81,7 +81,7 @@
                 </div>
               </div>
               <div class="demo-actions">
-                <button @click="fillDemoCredentials('demo_user', 'demo123')" class="demo-fill-btn">
+                <button @click="fillDemoCredentials('alice.johnson', 'demo123')" class="demo-fill-btn">
                   Fill Demo Credentials
                 </button>
                 <RouterLink to="/admin/login" class="demo-nav-btn">

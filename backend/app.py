@@ -1414,6 +1414,66 @@ def get_system_status():
             'error': str(e)
         }), 500
 
+
+@app.route('/api/admin/populate-demo-data', methods=['POST'])
+@jwt_required()
+def populate_demo_data():
+    """Populate database with comprehensive demo data"""
+    current_user = get_jwt_identity()
+    if current_user != 'admin':
+        return jsonify({'message': 'Admin access required'}), 403
+    
+    try:
+        from mock_data import MockDataGenerator
+        
+        mock_gen = MockDataGenerator(db)
+        result = mock_gen.populate_demo_data()
+        
+        # Get summary
+        summary = mock_gen.get_demo_analytics_summary()
+        
+        return jsonify({
+            'message': 'Demo data populated successfully',
+            'result': result,
+            'summary': summary,
+            'demo_credentials': {
+                'admin': {'username': 'admin', 'password': 'admin123'},
+                'users': {'username': '[any_username]', 'password': 'demo123'},
+                'example': {'username': 'alice.johnson', 'password': 'demo123'}
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'message': f'Error populating demo data: {str(e)}'
+        }), 500
+
+
+@app.route('/api/admin/demo-summary', methods=['GET'])
+@jwt_required()
+def get_demo_summary():
+    """Get demo data summary"""
+    current_user = get_jwt_identity()
+    if current_user != 'admin':
+        return jsonify({'message': 'Admin access required'}), 403
+    
+    try:
+        from mock_data import MockDataGenerator
+        
+        mock_gen = MockDataGenerator(db)
+        summary = mock_gen.get_demo_analytics_summary()
+        
+        return jsonify({
+            'summary': summary,
+            'demo_mode': True
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'message': f'Error getting demo summary: {str(e)}'
+        }), 500
+
+
 @app.route('/api/admin/force-train-model', methods=['POST'])
 @jwt_required()
 def force_train_model():

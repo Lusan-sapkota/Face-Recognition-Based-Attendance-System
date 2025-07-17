@@ -84,7 +84,7 @@
 
         <div v-else class="stats-grid">
           <div v-for="(stat, index) in getStatsConfig" :key="index" class="stat-card"
-            :style="{ '--delay': index * 0.1 + 's' }">
+            :style="{ '--delay': index * 0.3 + 's' }">
             <div class="stat-background">
               <div class="stat-pattern"></div>
             </div>
@@ -111,7 +111,6 @@
             :class="{ active: activeTab === tab.id }">
             <span class="tab-icon">{{ tab.icon }}</span>
             <span class="tab-label">{{ tab.label }}</span>
-            <div class="tab-highlight"></div>
           </button>
         </div>
       </nav>
@@ -120,546 +119,867 @@
       <main class="tab-content-area">
         <!-- Analytics Tab -->
         <div v-if="activeTab === 'analytics'" class="tab-content analytics-tab">
-          <div class="content-grid">
-            <!-- Enhanced Chart Section -->
-            <div class="chart-panel">
-              <div class="panel-header">
-                <h3 class="panel-title">
-                  <i class="title-icon">📊</i>
-                  Attendance Analytics
-                </h3>
-                <div class="panel-controls">
-                  <button class="control-btn">📅 Filter</button>
-                  <button class="control-btn">📤 Export</button>
-                </div>
+          <!-- Loading State for Analytics -->
+          <div v-if="analyticsLoading" class="analytics-loading">
+            <div class="loading-grid">
+              <div class="loading-card">
+                <div class="loading-shimmer"></div>
+                <div class="loading-text">Loading Charts...</div>
               </div>
-
-              <div class="chart-area">
-                <div v-if="attendanceChart.length > 0" class="modern-chart">
-                  <div v-for="(month, index) in attendanceChart" :key="index" class="chart-column" :style="{
-                    height: month.percentage + '%',
-                    animationDelay: (index * 0.1) + 's'
-                  }" @mouseover="showChartTooltip(month, $event)" @mouseleave="hideChartTooltip">
-                    <div class="column-fill"></div>
-                    <div class="column-label">{{ month.month.slice(0, 3) }}</div>
-                    <div class="column-value">{{ month.days }}</div>
-                  </div>
-                </div>
-                <div v-else class="empty-chart">
-                  <div class="empty-illustration">
-                    <i class="empty-icon">�</i>
-                    <h4>No Data Available</h4>
-                    <p>Start attending classes to see your analytics</p>
-                  </div>
-                </div>
+              <div class="loading-card">
+                <div class="loading-shimmer"></div>
+                <div class="loading-text">Loading Patterns...</div>
               </div>
-            </div>
-
-            <!-- Weekly Heatmap -->
-            <div class="heatmap-panel">
-              <div class="panel-header">
-                <h3 class="panel-title">
-                  <i class="title-icon">🗓️</i>
-                  Weekly Pattern
-                </h3>
-              </div>
-
-              <div class="heatmap-container">
-                <div v-for="day in weeklyPattern" :key="day.name" class="day-heatmap">
-                  <div class="day-header">
-                    <span class="day-name">{{ day.name }}</span>
-                    <span class="day-percentage">{{ day.percentage }}%</span>
-                  </div>
-                  <div class="day-progress-bar">
-                    <div class="progress-fill" :style="{ width: day.percentage + '%' }"
-                      :class="getProgressClass(day.percentage)"></div>
-                  </div>
-                </div>
+              <div class="loading-card">
+                <div class="loading-shimmer"></div>
+                <div class="loading-text">Loading Activity...</div>
               </div>
             </div>
           </div>
 
-          <!-- Activity Timeline -->
-          <div class="timeline-panel">
-            <div class="panel-header">
-              <h3 class="panel-title">
-                <i class="title-icon">⏱️</i>
-                {{ authStore.isAdmin ? 'Recent System Activity' : 'Your Recent Activity' }}
-              </h3>
-              <button class="control-btn" @click="refreshActivity">🔄 Refresh</button>
-            </div>
-
-            <div class="timeline-container">
-              <div v-for="activity in recentActivity.slice(0, 8)"
-                :key="authStore.isAdmin ? `${activity.user_id}-${activity.date}` : activity.date" class="timeline-item">
-                <div class="timeline-marker" :class="activity.status"></div>
-                <div class="timeline-content">
-                  <div class="activity-meta">
-                    <span v-if="authStore.isAdmin" class="activity-user">{{ activity.user_name || 'Unknown User'
-                      }}</span>
-                    <span class="activity-time">{{ formatTime(activity.time) }}</span>
-                    <span class="activity-date">{{ formatDate(activity.date) }}</span>
-                  </div>
-                  <div class="activity-details">
-                    <span class="status-indicator" :class="activity.status">
-                      {{ activity.status === 'present' ? '✅ Present' : '❌ Absent' }}
-                    </span>
-                    <span v-if="authStore.isAdmin && activity.user_type" class="user-type">
-                      {{ activity.user_type }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div v-if="recentActivity.length === 0" class="empty-timeline">
-                <div class="empty-illustration">
-                  <i class="empty-icon">📅</i>
-                  <h4>No Recent Activity</h4>
-                  <p>{{ authStore.isAdmin ? 'System activity will appear here' : 'Your activity will appear here' }}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Notices Tab -->
-        <div v-if="activeTab === 'notices'" class="tab-content notices-tab">
-          <div class="notices-container">
-            <!-- Enhanced Notices Header -->
-            <div class="notices-header">
-              <div class="header-content">
-                <h2 class="notices-title">
-                  <div class="title-icon-wrapper">
-                    <i class="title-icon">📢</i>
-                    <div class="notification-pulse"></div>
-                  </div>
-                  Important Announcements
-                </h2>
-              </div>
-
-              <div class="notices-actions">
-                <div class="notices-filters">
-                  <button class="filter-btn" :class="{ active: noticeFilter === 'all' }" @click="noticeFilter = 'all'">
-                    All
-                  </button>
-                  <button class="filter-btn" :class="{ active: noticeFilter === 'recent' }"
-                    @click="noticeFilter = 'recent'">
-                    Recent
-                  </button>
-                  <button class="filter-btn" :class="{ active: noticeFilter === 'important' }"
-                    @click="noticeFilter = 'important'">
-                    Important
-                  </button>
-                  <button v-if="authStore.isAdmin" @click="createNotice" class="create-notice-btn">
-                    <i class="btn-icon">➕</i>
-                    <span>Create Notice</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Notices Grid -->
-            <div class="notices-grid">
-              <div v-for="(notice, index) in filteredNotices" :key="notice.id" class="notice-card"
-                :style="{ '--delay': index * 0.1 + 's' }">
-                <div class="notice-background">
-                  <div class="notice-pattern"></div>
-                </div>
-
-                <div class="notice-header">
-                  <div class="notice-meta">
-                    <div class="notice-priority" :class="notice.priority">
-                      <i class="priority-icon">{{ getPriorityIcon(notice.priority) }}</i>
+          <div v-else class="content-grid">
+            <!-- Ultra Modern Chart Section -->
+            <section class="advanced-chart-panel chart-section">
+              <div class="panel-header-advanced">
+                <div class="header-left">
+                  <h3 class="panel-title">
+                    <div class="title-icon-container">
+                      <div class="icon-glow-effect"></div>
+                      <i class="title-icon">📊</i>
                     </div>
-                    <div class="notice-info">
-                      <h4 class="notice-title">{{ notice.title }}</h4>
-                      <div class="notice-details">
-                        <span class="notice-date">{{ formatDate(notice.created_at) }}</span>
-                        <span class="notice-separator">•</span>
-                        <span class="notice-author">{{ notice.created_by || 'System' }}</span>
+                    {{ authStore.isAdmin ? 'System Analytics Dashboard' : 'Personal Analytics Hub' }}
+                  </h3>
+
+                </div>
+                <div class="panel-controls-advanced">
+                  <div class="control-group">
+                    <button class="control-btn-modern" @click="filterChart">
+                      <span>Filter</span>
+                      <div class="btn-ripple"></div>
+                    </button>
+                    <button class="control-btn-modern" @click="exportChart">
+                      <span>Export</span>
+                      <div class="btn-ripple"></div>
+                    </button>
+                    <button class="control-btn-modern primary" @click="refreshAnalytics">
+                      <span>Refresh</span>
+                      <div class="btn-ripple"></div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="chart-area-advanced">
+                <div v-if="attendanceChart.length > 0" class="sophisticated-chart">
+                  <!-- Chart Header with Advanced Legend -->
+                  <div class="chart-header-advanced">
+                    <div class="chart-title-section">
+                      <h4 class="chart-title">Monthly Attendance Trend</h4>
+                      <div class="chart-metrics">
+                        <div class="metric-item">
+                          <span class="metric-label">Avg Rate</span>
+                          <span class="metric-value">{{ calculateAverageRate() }}%</span>
+                        </div>
+                        <div class="metric-item">
+                          <span class="metric-label">Peak Month</span>
+                          <span class="metric-value">{{ getPeakMonth() }}</span>
+                        </div>
+                        <div class="metric-item">
+                          <span class="metric-label">Trend</span>
+                          <span class="metric-value trend-up">↗ +5.2%</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="chart-legend-advanced">
+                      <div class="legend-item-advanced">
+                        <div class="legend-indicator primary-gradient"></div>
+                        <span>{{ authStore.isAdmin ? 'Total Attendance' : 'Your Attendance' }}</span>
+                      </div>
+                      <div class="legend-item-advanced">
+                        <div class="legend-indicator secondary-gradient"></div>
+                        <span>Target Goal</span>
                       </div>
                     </div>
                   </div>
 
-                  <div class="notice-actions">
-                    <button class="notice-action-btn bookmark" :class="{ active: notice.bookmarked }"
-                      @click="toggleBookmark(notice)" title="Bookmark">
-                      📑
-                    </button>
-                    <button class="notice-action-btn share" @click="shareNotice(notice)" title="Share">
-                      📤
-                    </button>
-                    <button v-if="authStore.isAdmin" class="notice-action-btn delete" @click="deleteNotice(notice)"
-                      title="Delete">
-                      �️
-                    </button>
+                  <!-- Advanced Chart Container -->
+                  <div class="chart-container-advanced">
+                    <!-- Y-Axis with Grid Lines -->
+                    <div class="chart-y-axis-advanced">
+                      <div class="y-label-advanced" v-for="(label, index) in ['100%', '75%', '50%', '25%', '0%']"
+                        :key="index">
+                        <span class="label-text">{{ label }}</span>
+                        <div class="grid-line" :style="{ opacity: index === 4 ? 0.3 : 0.1 }"></div>
+                      </div>
+                    </div>
+
+                    <!-- Chart Bars with Advanced Styling -->
+                    <div class="chart-bars-advanced">
+                      <div v-for="(month, index) in filteredChartData" :key="index" class="chart-column-advanced"
+                        :style="{
+                          animationDelay: (index * 0.15) + 's',
+                          '--column-index': index
+                        }" @mouseover="showAdvancedTooltip(month, $event, index)" @mouseleave="hideChartTooltip">
+
+                        <!-- Background Column -->
+                        <div class="column-background"></div>
+
+                        <!-- Main Data Column -->
+                        <div class="column-bar-advanced">
+                          <div class="column-fill-advanced" :style="{
+                            height: getChartHeight(month) + '%',
+                            background: getAdvancedGradient(month, index),
+                            '--fill-height': getChartHeight(month) + '%'
+                          }">
+                            <!-- Animated Fill Effect -->
+                            <div class="fill-animation"></div>
+                            <!-- Glow Effect -->
+                            <div class="column-glow"></div>
+                            <!-- Data Point -->
+                            <div class="data-point">
+                              <div class="point-pulse"></div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Target Line -->
+                        <div class="target-line" :style="{ bottom: '75%' }"></div>
+
+                        <!-- Column Labels -->
+                        <div class="column-label-advanced">{{ getChartLabel(month) }}</div>
+                        <div class="column-value-advanced">
+                          <span class="value-number">{{ getChartValue(month) }}</span>
+                          <span class="value-unit">{{ authStore.isAdmin ? 'users' : 'days' }}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Chart Overlay Effects -->
+                    <div class="chart-overlay">
+                      <div class="gradient-overlay"></div>
+                      <div class="particle-effect">
+                        <div v-for="i in 20" :key="i" class="particle" :style="{ '--delay': i * 0.1 + 's' }"></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Chart Footer with Insights -->
+                  <div class="chart-footer-advanced">
+                    <div class="insight-cards">
+                      <div class="insight-card">
+                        <div class="insight-icon">📈</div>
+                        <div class="insight-content">
+                          <span class="insight-title">Growth Rate</span>
+                          <span class="insight-value">+12.5%</span>
+                        </div>
+                      </div>
+                      <div class="insight-card">
+                        <div class="insight-icon">🎯</div>
+                        <div class="insight-content">
+                          <span class="insight-title">Goal Achievement</span>
+                          <span class="insight-value">87%</span>
+                        </div>
+                      </div>
+                      <div class="insight-card">
+                        <div class="insight-icon">⚡</div>
+                        <div class="insight-content">
+                          <span class="insight-title">Performance</span>
+                          <span class="insight-value">Excellent</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div class="notice-content">
-                  <p class="notice-text" :class="{ expanded: notice.expanded }">
-                    {{ notice.content }}
-                  </p>
+                <!-- Enhanced Empty State -->
+                <div v-else class="empty-chart-advanced">
+                  <div class="empty-illustration-advanced">
+                    <div class="empty-icon-container">
+                      <div class="icon-background"></div>
+                      <div class="empty-icon-animated">📊</div>
+                      <div class="icon-particles">
+                        <div v-for="i in 8" :key="i" class="icon-particle" :style="{ '--delay': i * 0.2 + 's' }"></div>
+                      </div>
+                    </div>
+                    <h4 class="empty-title">No Analytics Data Available</h4>
+                    <p class="empty-description">
+                      {{ authStore.isAdmin ? 'System analytics will appear here once data is collected' : 'Start attending classes to see your personalized analytics dashboard' }}
+                    </p>
+                    <button class="empty-action-btn-advanced" @click="refreshAnalytics">
+                      <i class="btn-icon">🔄</i>
+                      <span>Refresh Data</span>
+                      <div class="btn-shine"></div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+          </div>
 
-                  <button v-if="notice.content.length > 150" @click="toggleNoticeExpansion(notice)"
-                    class="read-more-btn">
-                    {{ notice.expanded ? 'Show Less' : 'Read More' }}
+          <!-- Weekly Attendance Pattern Panel -->
+          <section class="weekly-attendance-panel">
+            <!-- Panel Header -->
+            <header class="panel-header-modern">
+              <div class="header-content">
+                <div class="title-section">
+                  <div class="title-icon-wrapper">
+                    <div class="icon-glow-effect"></div>
+                    <i class="title-icon">🗓️</i>
+                  </div>
+                  <div class="title-text">
+                    <h3 class="panel-title">Weekly Attendance Pattern</h3>
+                    <p class="panel-subtitle">Track your weekly attendance trends</p>
+                  </div>
+                </div>
+
+                <div class="header-controls">
+                  <div class="control-group">
+                    <button class="control-btn-modern" @click="toggleWeeklyView">
+                      <span>{{ weeklyViewMode }}</span>
+                      <div class="btn-ripple"></div>
+                    </button>
+                    <button class="control-btn-modern secondary" @click="refreshAnalytics">
+                      <i class="btn-icon">🔄</i>
+                      <span>Refresh</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </header>
+
+            <!-- Panel Content -->
+            <div class="panel-content">
+              <!-- Weekly Pattern Carousel -->
+              <div v-if="weeklyPattern.length > 0" class="weekly-carousel-container">
+                <!-- Carousel Navigation -->
+                <div class="carousel-navigation">
+                  <button class="nav-btn nav-prev" @click="slideWeeklyCards('prev')"
+                    :disabled="currentSlideIndex === 0">
+                    <i class="nav-icon">‹</i>
+                  </button>
+
+                  <div class="slide-indicators">
+                    <div v-for="(indicator, index) in slideIndicators" :key="index" class="slide-indicator"
+                      :class="{ active: index === currentSlideIndex }" @click="goToSlide(index)"></div>
+                  </div>
+
+                  <button class="nav-btn nav-next" @click="slideWeeklyCards('next')"
+                    :disabled="currentSlideIndex >= slideIndicators.length - 1">
+                    <i class="nav-icon">›</i>
                   </button>
                 </div>
 
-                <div class="notice-footer">
-                  <div class="notice-tags">
-                    <span v-for="tag in notice.tags || []" :key="tag" class="notice-tag">
-                      {{ tag }}
-                    </span>
-                  </div>
+                <!-- Carousel Wrapper -->
+                <div class="carousel-wrapper" ref="carouselWrapper" @touchstart="handleTouchStart"
+                  @touchend="handleTouchEnd">
+                  <div class="weekly-carousel-track"
+                    :style="{ transform: `translateX(-${currentSlideIndex * slideWidth}%)` }" ref="carouselTrack">
+                    <div v-for="(day, index) in weeklyPattern" :key="day.name || day.day"
+                      class="day-card carousel-slide" :style="{ animationDelay: (index * 0.1) + 's' }">
+                      <!-- Day Header -->
+                      <div class="day-header">
+                        <div class="day-info">
+                          <h4 class="day-name">{{ getDayName(day) }}</h4>
+                          <div class="day-badge" :class="getProgressClass(getDayPercentage(day))">
+                            {{ getDayPercentage(day) }}%
+                          </div>
+                        </div>
+                        <div class="day-trend" :class="getDayPercentage(day) > 50 ? 'positive' : 'negative'">
+                          {{ getDayPercentage(day) > 50 ? '↗' : '↘' }}
+                        </div>
+                      </div>
 
-                  <div class="notice-engagement">
-                    <button class="engagement-btn">
-                      <i class="engagement-icon">👀</i>
-                      <span>{{ notice.views || 0 }}</span>
-                    </button>
-                    <button class="engagement-btn" @click="toggleLike(notice)">
-                      <i class="engagement-icon">👍</i>
-                      <span>{{ notice.likes || 0 }}</span>
+                      <!-- Progress Section -->
+                      <div class="progress-section">
+                        <div class="progress-bar-container">
+                          <div class="progress-bar-track">
+                            <div class="progress-bar-fill" :style="{
+                              width: getDayPercentage(day) + '%',
+                              background: getProgressGradient(getDayPercentage(day))
+                            }">
+                              <div class="progress-glow"></div>
+                              <div class="progress-shine"></div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="progress-stats">
+                          <div class="stat-item">
+                            <span class="stat-value">{{ getDayCount(day) }}</span>
+                            <span class="stat-label">days</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Day Details -->
+                      <div class="day-details">
+                        <div class="detail-row">
+                          <span class="detail-label">Avg Time</span>
+                          <span class="detail-value">{{ day.avgTime || '2h 15m' }}</span>
+                        </div>
+                        <div class="detail-row">
+                          <span class="detail-label">Status</span>
+                          <span class="detail-value status" :class="getProgressClass(getDayPercentage(day))">
+                            {{ getDayPercentage(day) > 75 ? 'Excellent' : getDayPercentage(day) > 50 ? 'Good' : 'Needs Improvement' }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Carousel Info -->
+                <div class="carousel-info">
+                  <span class="slide-counter">
+                    {{ currentSlideIndex + 1 }} / {{ slideIndicators.length }}
+                  </span>
+                  <div class="carousel-controls">
+                    <button class="control-btn-mini" @click="toggleAutoSlide">
+                      <i class="control-icon">{{ autoSlideEnabled ? '⏸️' : '▶️' }}</i>
                     </button>
                   </div>
                 </div>
               </div>
 
               <!-- Empty State -->
-              <div v-if="filteredNotices.length === 0" class="empty-notices">
+              <div v-else class="empty-state">
                 <div class="empty-illustration">
-                  <div class="empty-icon-wrapper">
-                    <i class="empty-icon">📢</i>
+                  <div class="empty-icon-container">
                     <div class="empty-icon-bg"></div>
+                    <div class="empty-icon">🗓️</div>
+                    <div class="icon-particles">
+                      <div v-for="i in 6" :key="i" class="particle" :style="{ '--delay': i * 0.2 + 's' }"></div>
+                    </div>
                   </div>
-                  <h4 class="empty-title">No Announcements Found</h4>
-                  <p class="empty-description">
-                    {{ noticeFilter === 'all' ? 'There are no announcements at the moment.' : `No ${noticeFilter}
-                    announcements available.` }}
-                  </p>
-                  <button v-if="authStore.isAdmin" @click="createNotice" class="empty-action-btn">
-                    ➕ Create First Notice
-                  </button>
+                  <div class="empty-content">
+                    <h4 class="empty-title">No Weekly Data Available</h4>
+                    <p class="empty-description">Weekly attendance patterns will appear here once data is collected
+                    </p>
+                    <button class="empty-action-btn" @click="refreshAnalytics">
+                      <i class="btn-icon">🔄</i>
+                      <span>Refresh Data</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Performance Insights Panel -->
+          <div class="insights-panel">
+            <div class="panel-header">
+              <h3 class="panel-title">
+                <i class="title-icon">💡</i>
+                Performance Insights
+              </h3>
+            </div>
+
+            <div class="insights-container">
+              <div v-if="performanceInsights" class="insights-grid">
+                <div class="insight-card">
+                  <div class="insight-icon">🎯</div>
+                  <div class="insight-content">
+                    <h4>Attendance Goal</h4>
+                    <p>{{ performanceInsights.goal || 'Maintain consistent attendance' }}</p>
+                  </div>
+                </div>
+                <div class="insight-card">
+                  <div class="insight-icon">📈</div>
+                  <div class="insight-content">
+                    <h4>Trend Analysis</h4>
+                    <p>{{ performanceInsights.trend || 'Your attendance is improving' }}</p>
+                  </div>
+                </div>
+                <div class="insight-card">
+                  <div class="insight-icon">🏆</div>
+                  <div class="insight-content">
+                    <h4>Achievement</h4>
+                    <p>{{ performanceInsights.achievement || 'Keep up the great work!' }}</p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Profile Tab (Student) -->
-        <div v-if="activeTab === 'profile' && !authStore.isAdmin" class="tab-content profile-tab">
-          <div class="profile-layout">
-            <!-- Enhanced Profile Card -->
-            <div class="profile-main">
-              <div class="profile-header">
-                <div class="profile-avatar-large">
-                  <div class="avatar-container">
-                    <div class="avatar-circle-large">
-                      {{ getInitials(authStore.user?.name || 'U') }}
-                    </div>
-                    <div class="avatar-status online"></div>
-                  </div>
-                </div>
-                <div class="profile-info">
-                  <h2 class="profile-name">{{ authStore.user?.name || 'Unknown User' }}</h2>
-                  <p class="profile-role">{{ formatRole(authStore.user?.type || 'user') }}</p>
-                  <div class="profile-badges">
-                    <span class="badge active">Active</span>
-                    <span class="badge verified">Verified</span>
-                  </div>
-                </div>
-              </div>
+        <!-- Activity Timeline -->
+        <div class="timeline-panel">
+          <div class="panel-header">
+            <h3 class="panel-title">
+              <i class="title-icon">⏱️</i>
+              {{ authStore.isAdmin ? 'Recent System Activity' : 'Your Recent Activity' }}
+            </h3>
+            <button class="control-btn" @click="refreshActivity">🔄 Refresh</button>
+          </div>
 
-              <div class="profile-details">
-                <div class="detail-row">
-                  <span class="detail-label">🆔 Student ID</span>
-                  <span class="detail-value">{{ authStore.user?.id || 'N/A' }}</span>
+          <div class="timeline-container">
+            <div v-for="activity in recentActivity.slice(0, 8)"
+              :key="authStore.isAdmin ? `${activity.user_id}-${activity.date}` : activity.date" class="timeline-item">
+              <div class="timeline-marker" :class="activity.status"></div>
+              <div class="timeline-content">
+                <div class="activity-meta">
+                  <span v-if="authStore.isAdmin" class="activity-user">{{ activity.user_name || 'Unknown User'
+                  }}</span>
+                  <span class="activity-time">{{ formatTime(activity.time) }}</span>
+                  <span class="activity-date">{{ formatDate(activity.date) }}</span>
                 </div>
-                <div class="detail-row">
-                  <span class="detail-label">👤 Username</span>
-                  <span class="detail-value">{{ authStore.user?.username || 'N/A' }}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">🏫 Class/Section</span>
-                  <span class="detail-value">{{ authStore.user?.class_section || 'N/A' }}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">📅 Registered</span>
-                  <span class="detail-value">{{ formatDate(authStore.user?.registered_date || '') }}</span>
+                <div class="activity-details">
+                  <span class="status-indicator" :class="activity.status">
+                    {{ activity.status === 'present' ? '✅ Present' : '❌ Absent' }}
+                  </span>
+                  <span v-if="authStore.isAdmin && activity.user_type" class="user-type">
+                    {{ activity.user_type }}
+                  </span>
                 </div>
               </div>
             </div>
 
-            <!-- Profile Statistics -->
-            <div class="profile-stats">
-              <div class="stats-header">
-                <h3 class="stats-title">
-                  <i class="title-icon">📊</i>
-                  Your Statistics
+            <div v-if="recentActivity.length === 0" class="empty-timeline">
+              <div class="empty-illustration">
+                <i class="empty-icon">📅</i>
+                <h4>No Recent Activity</h4>
+                <p>{{ authStore.isAdmin ? 'System activity will appear here' : 'Your activity will appear here' }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Notices Tab -->
+    <div v-if="activeTab === 'notices'" class="tab-content notices-tab">
+      <div class="notices-container">
+        <!-- Enhanced Notices Header -->
+        <div class="notices-header">
+          <div class="header-content">
+            <h2 class="notices-title">
+              <div class="title-icon-wrapper">
+                <i class="title-icon">📢</i>
+                <div class="notification-pulse"></div>
+              </div>
+              Important Announcements
+            </h2>
+          </div>
+
+          <div class="notices-actions">
+            <div class="notices-filters">
+              <button class="filter-btn" :class="{ active: noticeFilter === 'all' }" @click="noticeFilter = 'all'">
+                All
+              </button>
+              <button class="filter-btn" :class="{ active: noticeFilter === 'recent' }"
+                @click="noticeFilter = 'recent'">
+                Recent
+              </button>
+              <button class="filter-btn" :class="{ active: noticeFilter === 'important' }"
+                @click="noticeFilter = 'important'">
+                Important
+              </button>
+              <button v-if="authStore.isAdmin" @click="createNotice" class="create-notice-btn">
+                <i class="btn-icon">➕</i>
+                <span>Create Notice</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notices Grid -->
+        <div class="notices-grid">
+          <div v-for="(notice, index) in filteredNotices" :key="notice.id" class="notice-card"
+            :style="{ '--delay': index * 0.1 + 's' }">
+            <div class="notice-background">
+              <div class="notice-pattern"></div>
+            </div>
+
+            <div class="notice-header">
+              <div class="notice-meta">
+                <div class="notice-priority" :class="notice.priority">
+                  <i class="priority-icon">{{ getPriorityIcon(notice.priority) }}</i>
+                </div>
+                <div class="notice-info">
+                  <h4 class="notice-title">{{ notice.title }}</h4>
+                  <div class="notice-details">
+                    <span class="notice-date">{{ formatDate(notice.created_at) }}</span>
+                    <span class="notice-separator">•</span>
+                    <span class="notice-author">{{ notice.created_by || 'System' }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="notice-actions">
+                <button class="notice-action-btn bookmark" :class="{ active: notice.bookmarked }"
+                  @click="toggleBookmark(notice)" title="Bookmark">
+                  📑
+                </button>
+                <button class="notice-action-btn share" @click="shareNotice(notice)" title="Share">
+                  📤
+                </button>
+                <button v-if="authStore.isAdmin" class="notice-action-btn delete" @click="deleteNotice(notice)"
+                  title="Delete">
+                  �️
+                </button>
+              </div>
+            </div>
+
+            <div class="notice-content">
+              <p class="notice-text" :class="{ expanded: notice.expanded }">
+                {{ notice.content }}
+              </p>
+
+              <button v-if="notice.content.length > 150" @click="toggleNoticeExpansion(notice)" class="read-more-btn">
+                {{ notice.expanded ? 'Show Less' : 'Read More' }}
+              </button>
+            </div>
+
+            <div class="notice-footer">
+              <div class="notice-tags">
+                <span v-for="tag in notice.tags || []" :key="tag" class="notice-tag">
+                  {{ tag }}
+                </span>
+              </div>
+
+              <div class="notice-engagement">
+                <button class="engagement-btn">
+                  <i class="engagement-icon">👀</i>
+                  <span>{{ notice.views || 0 }}</span>
+                </button>
+                <button class="engagement-btn" @click="toggleLike(notice)">
+                  <i class="engagement-icon">👍</i>
+                  <span>{{ notice.likes || 0 }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div v-if="filteredNotices.length === 0" class="empty-notices">
+            <div class="empty-illustration">
+              <div class="empty-icon-wrapper">
+                <i class="empty-icon">📢</i>
+                <div class="empty-icon-bg"></div>
+              </div>
+              <h4 class="empty-title">No Announcements Found</h4>
+              <p class="empty-description">
+                {{ noticeFilter === 'all' ? 'There are no announcements at the moment.' : `No ${noticeFilter}
+                announcements available.` }}
+              </p>
+              <button v-if="authStore.isAdmin" @click="createNotice" class="empty-action-btn">
+                ➕ Create First Notice
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile Tab (Student) -->
+    <div v-if="activeTab === 'profile' && !authStore.isAdmin" class="tab-content profile-tab">
+      <div class="profile-layout">
+        <!-- Enhanced Profile Card -->
+        <div class="profile-main">
+          <div class="profile-header">
+            <div class="profile-avatar-large">
+              <div class="avatar-container">
+                <div class="avatar-circle-large">
+                  {{ getInitials(authStore.user?.name || 'U') }}
+                </div>
+                <div class="avatar-status online"></div>
+              </div>
+            </div>
+            <div class="profile-info">
+              <h2 class="profile-name">{{ authStore.user?.name || 'Unknown User' }}</h2>
+              <p class="profile-role">{{ formatRole(authStore.user?.type || 'user') }}</p>
+              <div class="profile-badges">
+                <span class="badge active">Active</span>
+                <span class="badge verified">Verified</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="profile-details">
+            <div class="detail-row">
+              <span class="detail-label">🆔 Student ID</span>
+              <span class="detail-value">{{ authStore.user?.id || 'N/A' }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">👤 Username</span>
+              <span class="detail-value">{{ authStore.user?.username || 'N/A' }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">🏫 Class/Section</span>
+              <span class="detail-value">{{ authStore.user?.class_section || 'N/A' }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">📅 Registered</span>
+              <span class="detail-value">{{ formatDate(authStore.user?.registered_date || '') }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Profile Statistics -->
+        <div class="profile-stats">
+          <div class="stats-header">
+            <h3 class="stats-title">
+              <i class="title-icon">📊</i>
+              Your Statistics
+            </h3>
+          </div>
+
+          <div class="stats-items">
+            <div class="stat-item">
+              <div class="stat-icon">🔥</div>
+              <div class="stat-data">
+                <span class="stat-number">{{ profileStats.consecutiveDays }}</span>
+                <span class="stat-text">Day Streak</span>
+              </div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-icon">⏰</div>
+              <div class="stat-data">
+                <span class="stat-number">{{ profileStats.avgDailyTime }}</span>
+                <span class="stat-text">Avg Time</span>
+              </div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-icon">🏆</div>
+              <div class="stat-data">
+                <span class="stat-number">{{ profileStats.bestMonth }}</span>
+                <span class="stat-text">Best Month</span>
+              </div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-icon">📱</div>
+              <div class="stat-data">
+                <span class="stat-number">{{ profileStats.totalLogins }}</span>
+                <span class="stat-text">Total Logins</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Achievements -->
+          <div class="achievements-section">
+            <h4 class="achievements-title">🏅 Achievements</h4>
+            <div class="achievements-grid">
+              <div v-for="achievement in achievements" :key="achievement.id" class="achievement-item"
+                :title="achievement.description">
+                <div class="achievement-icon">{{ achievement.icon }}</div>
+                <span class="achievement-name">{{ achievement.name }}</span>
+              </div>
+
+              <div v-if="achievements.length === 0" class="no-achievements">
+                <div class="achievement-icon">🏆</div>
+                <span class="achievement-name">Keep Going!</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Management Tab (Admin) -->
+    <div v-if="activeTab === 'management' && authStore.isAdmin" class="tab-content management-tab">
+      <div class="management-layout">
+        <!-- Management Header -->
+        <div class="management-header">
+          <div class="header-content">
+            <h2 class="section-title">
+              <div class="title-icon-wrapper">
+                <i class="title-icon">⚙️</i>
+                <div class="icon-glow"></div>
+              </div>
+              System Management Center
+            </h2>
+            <p class="section-subtitle">Configure settings, manage users, and monitor system performance</p>
+          </div>
+          <div class="header-stats">
+            <div class="quick-stat">
+              <span class="stat-number">{{ users.length }}</span>
+              <span class="stat-label">Total Users</span>
+            </div>
+            <div class="quick-stat">
+              <span class="stat-number">{{ dashboardStats.attendanceRate }}%</span>
+              <span class="stat-label">Attendance Rate</span>
+            </div>
+            <div class="quick-stat">
+              <span class="stat-number">{{ notices.length }}</span>
+              <span class="stat-label">Active Notices</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Management Grid -->
+        <div class="management-grid">
+          <!-- System Configuration Card -->
+          <div class="config-section">
+            <div class="config-card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <i class="title-icon">⚙️</i>
+                  System Configuration
                 </h3>
-              </div>
-
-              <div class="stats-items">
-                <div class="stat-item">
-                  <div class="stat-icon">🔥</div>
-                  <div class="stat-data">
-                    <span class="stat-number">{{ profileStats.consecutiveDays }}</span>
-                    <span class="stat-text">Day Streak</span>
-                  </div>
-                </div>
-                <div class="stat-item">
-                  <div class="stat-icon">⏰</div>
-                  <div class="stat-data">
-                    <span class="stat-number">{{ profileStats.avgDailyTime }}</span>
-                    <span class="stat-text">Avg Time</span>
-                  </div>
-                </div>
-                <div class="stat-item">
-                  <div class="stat-icon">🏆</div>
-                  <div class="stat-data">
-                    <span class="stat-number">{{ profileStats.bestMonth }}</span>
-                    <span class="stat-text">Best Month</span>
-                  </div>
-                </div>
-                <div class="stat-item">
-                  <div class="stat-icon">📱</div>
-                  <div class="stat-data">
-                    <span class="stat-number">{{ profileStats.totalLogins }}</span>
-                    <span class="stat-text">Total Logins</span>
-                  </div>
+                <div class="card-status">
+                  <span class="status-dot active"></span>
+                  <span class="status-text">Active</span>
                 </div>
               </div>
 
-              <!-- Achievements -->
-              <div class="achievements-section">
-                <h4 class="achievements-title">🏅 Achievements</h4>
-                <div class="achievements-grid">
-                  <div v-for="achievement in achievements" :key="achievement.id" class="achievement-item"
-                    :title="achievement.description">
-                    <div class="achievement-icon">{{ achievement.icon }}</div>
-                    <span class="achievement-name">{{ achievement.name }}</span>
+              <div class="config-form">
+                <div class="form-grid">
+                  <div class="form-field">
+                    <label class="field-label">🎓 Program/Degree</label>
+                    <select v-model="classConfig.program" class="field-input">
+                      <option value="bachelors">Bachelor's</option>
+                      <option value="masters">Master's</option>
+                      <option value="diploma">Diploma</option>
+                    </select>
                   </div>
 
-                  <div v-if="achievements.length === 0" class="no-achievements">
-                    <div class="achievement-icon">🏆</div>
-                    <span class="achievement-name">Keep Going!</span>
+                  <div class="form-field">
+                    <label class="field-label">📚 Semester/Year</label>
+                    <select v-model="classConfig.semester" class="field-input">
+                      <option value="1st">1st Semester</option>
+                      <option value="2nd">2nd Semester</option>
+                      <option value="3rd">3rd Semester</option>
+                      <option value="4th">4th Semester</option>
+                      <option value="5th">5th Semester</option>
+                      <option value="6th">6th Semester</option>
+                      <option value="7th">7th Semester</option>
+                      <option value="8th">8th Semester</option>
+                    </select>
+                  </div>
+
+                  <div class="form-field">
+                    <label class="field-label">🏫 Section</label>
+                    <input v-model="classConfig.section" type="text" class="field-input" placeholder="e.g., A, B, C" />
+                  </div>
+
+                  <div class="form-field">
+                    <label class="field-label">📖 Subject/Course</label>
+                    <input v-model="classConfig.subject" type="text" class="field-input"
+                      placeholder="e.g., Computer Science" />
                   </div>
                 </div>
+
+                <button @click="saveClassConfig" class="save-btn">
+                  💾 Save Configuration
+                </button>
+              </div>
+            </div>
+
+            <!-- Time Settings -->
+            <div class="time-card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <i class="title-icon">⏰</i>
+                  Time Settings
+                </h3>
+                <div class="status-indicator active">Active</div>
+              </div>
+
+              <div class="time-form">
+                <div class="time-grid">
+                  <div class="time-field">
+                    <label class="field-label">🕘 Class Start Time</label>
+                    <input v-model="timeSettings.startTime" type="time" class="field-input" />
+                  </div>
+
+                  <div class="time-field">
+                    <label class="field-label">⏱️ Grace Period</label>
+                    <div class="input-group">
+                      <input v-model="timeSettings.gracePeriod" type="number" min="0" max="30" class="field-input" />
+                      <span class="input-suffix">minutes</span>
+                    </div>
+                  </div>
+
+                  <div class="time-field">
+                    <label class="field-label">🚫 Late Cutoff</label>
+                    <input v-model="timeSettings.cutoffTime" type="time" class="field-input" />
+                  </div>
+
+                  <div class="time-field">
+                    <label class="field-label">📵 Auto Absent After</label>
+                    <select v-model="timeSettings.autoAbsent" class="field-input">
+                      <option value="30">30 minutes</option>
+                      <option value="60">1 hour</option>
+                      <option value="120">2 hours</option>
+                      <option value="0">Never</option>
+                    </select>
+                  </div>
+                </div>
+
+                <button @click="saveTimeSettings" class="save-btn">
+                  ⚡ Apply Settings
+                </button>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Management Tab (Admin) -->
-        <div v-if="activeTab === 'management' && authStore.isAdmin" class="tab-content management-tab">
-          <div class="management-layout">
-            <!-- Management Header -->
-            <div class="management-header">
-              <div class="header-content">
-                <h2 class="section-title">
-                  <div class="title-icon-wrapper">
-                    <i class="title-icon">⚙️</i>
-                    <div class="icon-glow"></div>
-                  </div>
-                  System Management Center
-                </h2>
-                <p class="section-subtitle">Configure settings, manage users, and monitor system performance</p>
-              </div>
-              <div class="header-stats">
-                <div class="quick-stat">
-                  <span class="stat-number">{{ users.length }}</span>
-                  <span class="stat-label">Total Users</span>
-                </div>
-                <div class="quick-stat">
-                  <span class="stat-number">{{ dashboardStats.attendanceRate }}%</span>
-                  <span class="stat-label">Attendance Rate</span>
-                </div>
-                <div class="quick-stat">
-                  <span class="stat-number">{{ notices.length }}</span>
-                  <span class="stat-label">Active Notices</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Management Grid -->
-            <div class="management-grid">
-              <!-- System Configuration Card -->
-              <div class="config-section">
-                <div class="config-card">
-                  <div class="card-header">
-                    <h3 class="card-title">
-                      <i class="title-icon">⚙️</i>
-                      System Configuration
-                    </h3>
-                    <div class="card-status">
-                      <span class="status-dot active"></span>
-                      <span class="status-text">Active</span>
-                    </div>
-                  </div>
-
-                  <div class="config-form">
-                    <div class="form-grid">
-                      <div class="form-field">
-                        <label class="field-label">🎓 Program/Degree</label>
-                        <select v-model="classConfig.program" class="field-input">
-                          <option value="bachelors">Bachelor's</option>
-                          <option value="masters">Master's</option>
-                          <option value="diploma">Diploma</option>
-                        </select>
-                      </div>
-
-                      <div class="form-field">
-                        <label class="field-label">📚 Semester/Year</label>
-                        <select v-model="classConfig.semester" class="field-input">
-                          <option value="1st">1st Semester</option>
-                          <option value="2nd">2nd Semester</option>
-                          <option value="3rd">3rd Semester</option>
-                          <option value="4th">4th Semester</option>
-                          <option value="5th">5th Semester</option>
-                          <option value="6th">6th Semester</option>
-                          <option value="7th">7th Semester</option>
-                          <option value="8th">8th Semester</option>
-                        </select>
-                      </div>
-
-                      <div class="form-field">
-                        <label class="field-label">🏫 Section</label>
-                        <input v-model="classConfig.section" type="text" class="field-input"
-                          placeholder="e.g., A, B, C" />
-                      </div>
-
-                      <div class="form-field">
-                        <label class="field-label">📖 Subject/Course</label>
-                        <input v-model="classConfig.subject" type="text" class="field-input"
-                          placeholder="e.g., Computer Science" />
-                      </div>
-                    </div>
-
-                    <button @click="saveClassConfig" class="save-btn">
-                      💾 Save Configuration
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Time Settings -->
-                <div class="time-card">
-                  <div class="card-header">
-                    <h3 class="card-title">
-                      <i class="title-icon">⏰</i>
-                      Time Settings
-                    </h3>
-                    <div class="status-indicator active">Active</div>
-                  </div>
-
-                  <div class="time-form">
-                    <div class="time-grid">
-                      <div class="time-field">
-                        <label class="field-label">🕘 Class Start Time</label>
-                        <input v-model="timeSettings.startTime" type="time" class="field-input" />
-                      </div>
-
-                      <div class="time-field">
-                        <label class="field-label">⏱️ Grace Period</label>
-                        <div class="input-group">
-                          <input v-model="timeSettings.gracePeriod" type="number" min="0" max="30"
-                            class="field-input" />
-                          <span class="input-suffix">minutes</span>
-                        </div>
-                      </div>
-
-                      <div class="time-field">
-                        <label class="field-label">🚫 Late Cutoff</label>
-                        <input v-model="timeSettings.cutoffTime" type="time" class="field-input" />
-                      </div>
-
-                      <div class="time-field">
-                        <label class="field-label">📵 Auto Absent After</label>
-                        <select v-model="timeSettings.autoAbsent" class="field-input">
-                          <option value="30">30 minutes</option>
-                          <option value="60">1 hour</option>
-                          <option value="120">2 hours</option>
-                          <option value="0">Never</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <button @click="saveTimeSettings" class="save-btn">
-                      ⚡ Apply Settings
-                    </button>
-                  </div>
+          <!-- User Management Section -->
+          <div class="users-section">
+            <div class="users-card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <i class="title-icon">👥</i>
+                  Manage Users
+                </h3>
+                <div class="card-actions">
+                  <button @click="loadUsers" class="action-btn">🔄 Refresh</button>
+                  <button @click="openUserRegistrationModal" class="action-btn primary">➕ Add User</button>
                 </div>
               </div>
 
-              <!-- User Management Section -->
-              <div class="users-section">
-                <div class="users-card">
-                  <div class="card-header">
-                    <h3 class="card-title">
-                      <i class="title-icon">👥</i>
-                      Manage Users
-                    </h3>
-                    <div class="card-actions">
-                      <button @click="loadUsers" class="action-btn">🔄 Refresh</button>
-                      <button @click="openUserRegistrationModal" class="action-btn primary">➕ Add User</button>
-                    </div>
-                  </div>
+              <div v-if="loadingUsers" class="loading-container">
+                <div class="loader"></div>
+                <span>Loading users...</span>
+              </div>
 
-                  <div v-if="loadingUsers" class="loading-container">
-                    <div class="loader"></div>
-                    <span>Loading users...</span>
-                  </div>
+              <div v-else class="users-table-container">
+                <table class="users-table" v-if="users.length > 0">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Name</th>
+                      <th>Type</th>
+                      <th>Class/Section</th>
+                      <th>Face Data</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="user in users" :key="user.id" class="user-row">
+                      <td class="user-id">{{ user.id }}</td>
+                      <td class="user-name">{{ user.name }}</td>
+                      <td class="user-type">
+                        <span class="type-badge" :class="user.type">{{ user.type }}</span>
+                      </td>
+                      <td class="user-class">{{ user.class_section || 'N/A' }}</td>
+                      <td class="user-face-status">
+                        <span class="face-badge"
+                          :class="{ 'has-face': user.has_face_data, 'no-face': !user.has_face_data }">
+                          {{ user.has_face_data ? 'Yes' : 'No' }}
+                        </span>
+                      </td>
+                      <td class="user-actions">
+                        <button v-if="!user.has_face_data" @click="captureUserFace(user)"
+                          class="action-btn-small capture" title="Capture Face">
+                          📸
+                        </button>
+                        <button @click="editUser(user)" class="action-btn-small edit" title="Edit User">
+                          ✏️
+                        </button>
+                        <button @click="deleteUser(user)" class="action-btn-small delete" title="Delete User">
+                          🗑️
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
 
-                  <div v-else class="users-table-container">
-                    <table class="users-table" v-if="users.length > 0">
-                      <thead>
-                        <tr>
-                          <th>ID</th>
-                          <th>Name</th>
-                          <th>Type</th>
-                          <th>Class/Section</th>
-                          <th>Face Data</th>
-                          <th>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr v-for="user in users" :key="user.id" class="user-row">
-                          <td class="user-id">{{ user.id }}</td>
-                          <td class="user-name">{{ user.name }}</td>
-                          <td class="user-type">
-                            <span class="type-badge" :class="user.type">{{ user.type }}</span>
-                          </td>
-                          <td class="user-class">{{ user.class_section || 'N/A' }}</td>
-                          <td class="user-face-status">
-                            <span class="face-badge"
-                              :class="{ 'has-face': user.has_face_data, 'no-face': !user.has_face_data }">
-                              {{ user.has_face_data ? 'Yes' : 'No' }}
-                            </span>
-                          </td>
-                          <td class="user-actions">
-                            <button v-if="!user.has_face_data" @click="captureUserFace(user)"
-                              class="action-btn-small capture" title="Capture Face">
-                              📸
-                            </button>
-                            <button @click="editUser(user)" class="action-btn-small edit" title="Edit User">
-                              ✏️
-                            </button>
-                            <button @click="deleteUser(user)" class="action-btn-small delete" title="Delete User">
-                              🗑️
-                            </button>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-
-                    <div v-else class="empty-users">
-                      <div class="empty-illustration enhanced-empty-users">
-                        <div class="empty-icon-bg"></div>
-                        <i class="empty-icon">👥</i>
-                        <h4 class="empty-title">No Users Found</h4>
-                        <p class="empty-description">Add users to see them listed here.</p>
-                        <button @click="openUserRegistrationModal" class="add-user-btn enhanced-add-user-btn" style="
+                <div v-else class="empty-users">
+                  <div class="empty-illustration enhanced-empty-users">
+                    <div class="empty-icon-bg"></div>
+                    <i class="empty-icon">👥</i>
+                    <h4 class="empty-title">No Users Found</h4>
+                    <p class="empty-description">Add users to see them listed here.</p>
+                    <button @click="openUserRegistrationModal" class="add-user-btn enhanced-add-user-btn" style="
                         background: linear-gradient(135deg, #4ecdc4, #45b7d1);
                         color: white;
                         border: none;
@@ -671,92 +991,158 @@
                         transition: all 0.3s ease;
                         box-shadow: 0 6px 20px rgba(78, 205, 196, 0.3);
                       " @mouseover="handleAddUserMouseOver" @mouseout="handleAddUserMouseOut">
-                          ➕ Add First User
-                        </button>
-                      </div>
-                    </div>
+                      ➕ Add First User
+                    </button>
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
 
-              <!-- Active Classes -->
-              <div class="classes-section">
-                <div class="classes-card">
-                  <div class="card-header">
-                    <h3 class="card-title">
-                      <i class="title-icon">🏫</i>
-                      Today's Classes
-                    </h3>
-                    <div class="card-actions">
-                      <button @click="refreshClasses" class="action-btn">🔄</button>
-                      <button class="action-btn primary">➕ Add Class</button>
+          <!-- Active Classes -->
+          <div class="classes-section">
+            <div class="classes-card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <i class="title-icon">🏫</i>
+                  Today's Classes
+                </h3>
+                <div class="card-actions">
+                  <button @click="refreshClasses" class="action-btn">🔄</button>
+                  <button class="action-btn primary">➕ Add Class</button>
+                </div>
+              </div>
+
+              <div class="classes-grid">
+                <div v-for="cls in activeClasses" :key="cls.id" class="class-card">
+                  <div class="class-header">
+                    <div class="class-info">
+                      <h4 class="class-name">{{ cls.name }}</h4>
+                      <p class="class-details">{{ cls.program }} {{ cls.semester }} - Section {{ cls.section }}</p>
+                    </div>
+                    <div class="class-status" :class="getClassStatus(cls)">
+                      {{ getClassStatusText(cls) }}
                     </div>
                   </div>
 
-                  <div class="classes-grid">
-                    <div v-for="cls in activeClasses" :key="cls.id" class="class-card">
-                      <div class="class-header">
-                        <div class="class-info">
-                          <h4 class="class-name">{{ cls.name }}</h4>
-                          <p class="class-details">{{ cls.program }} {{ cls.semester }} - Section {{ cls.section }}</p>
-                        </div>
-                        <div class="class-status" :class="getClassStatus(cls)">
-                          {{ getClassStatusText(cls) }}
-                        </div>
-                      </div>
+                  <div class="class-time">
+                    <span class="time-range">{{ cls.startTime }} - {{ cls.endTime }}</span>
+                  </div>
 
-                      <div class="class-time">
-                        <span class="time-range">{{ cls.startTime }} - {{ cls.endTime }}</span>
-                      </div>
-
-                      <div class="class-attendance">
-                        <div class="attendance-bar">
-                          <div class="attendance-fill" :style="{ width: cls.rate + '%' }"></div>
-                        </div>
-                        <span class="attendance-text">{{ cls.present }}/{{ cls.total }} ({{ cls.rate }}%)</span>
-                      </div>
-
-                      <button @click="openAttendance(cls)" class="class-action-btn">
-                        📋 Take Attendance
-                      </button>
+                  <div class="class-attendance">
+                    <div class="attendance-bar">
+                      <div class="attendance-fill" :style="{ width: cls.rate + '%' }"></div>
                     </div>
+                    <span class="attendance-text">{{ cls.present }}/{{ cls.total }} ({{ cls.rate }}%)</span>
+                  </div>
 
-                    <div v-if="activeClasses.length === 0" class="empty-classes">
-                      <div class="empty-illustration">
-                        <i class="empty-icon">🏫</i>
-                        <h4>No Active Classes</h4>
-                        <p>Set up class schedules to see them here</p>
-                        <button class="setup-btn">⚙️ Setup Classes</button>
-                      </div>
-                    </div>
+                  <button @click="openAttendance(cls)" class="class-action-btn">
+                    📋 Take Attendance
+                  </button>
+                </div>
+
+                <div v-if="activeClasses.length === 0" class="empty-classes">
+                  <div class="empty-illustration">
+                    <i class="empty-icon">🏫</i>
+                    <h4>No Active Classes</h4>
+                    <p>Set up class schedules to see them here</p>
+                    <button class="setup-btn">⚙️ Setup Classes</button>
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </main>
-    </div>
-
-    <!-- Enhanced Camera Modal -->
-    <CameraModal :show="showCameraModal" @close="closeCameraModal" @success="onAttendanceSuccess" />
-
-    <!-- User Registration Modal -->
-    <UserRegistrationModal :show="showUserRegistrationModal" :existing-user="transformedUserToCapture"
-      @close="closeUserRegistrationModal" @success="onUserRegistrationSuccess" />
-
-    <!-- Chart Tooltip -->
-    <div v-if="chartTooltip.show" class="chart-tooltip" :style="chartTooltip.style">
-      <div class="tooltip-content">
-        <div class="tooltip-title">{{ chartTooltip.title }}</div>
-        <div class="tooltip-value">{{ chartTooltip.value }}</div>
       </div>
+    </div>
+  </div>
+
+  <!-- Chart Filter Modal -->
+  <div v-if="showFilterModal" class="modal-overlay" @click="showFilterModal = false">
+    <div class="filter-modal" @click.stop>
+      <div class="modal-header">
+        <h3 class="modal-title">
+          <i class="modal-icon">🔍</i>
+          Chart Filters
+        </h3>
+        <button class="modal-close" @click="showFilterModal = false">✕</button>
+      </div>
+
+      <div class="modal-content">
+        <div class="filter-section">
+          <label class="filter-label">Date Range</label>
+          <select v-model="chartFilters.dateRange" class="filter-select">
+            <option value="all">All Time</option>
+            <option value="last3months">Last 3 Months</option>
+            <option value="last6months">Last 6 Months</option>
+            <option value="thisyear">This Year</option>
+          </select>
+        </div>
+
+        <div class="filter-section">
+          <label class="filter-label">Minimum Attendance (%)</label>
+          <div class="range-container">
+            <input type="range" v-model="chartFilters.attendanceThreshold" min="0" max="100" step="5"
+              class="filter-range">
+            <span class="range-value">{{ chartFilters.attendanceThreshold }}%</span>
+          </div>
+        </div>
+
+        <div class="filter-section">
+          <label class="filter-label">Sort By</label>
+          <select v-model="chartFilters.sortBy" class="filter-select">
+            <option value="date">Date</option>
+            <option value="attendance">Attendance Rate</option>
+            <option value="alphabetical">Alphabetical</option>
+          </select>
+        </div>
+
+        <div class="filter-section">
+          <label class="filter-label">Sort Order</label>
+          <div class="radio-group">
+            <label class="radio-option">
+              <input type="radio" v-model="chartFilters.sortOrder" value="asc">
+              <span class="radio-text">Ascending</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" v-model="chartFilters.sortOrder" value="desc">
+              <span class="radio-text">Descending</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="modal-btn secondary" @click="resetChartFilters">
+          <i class="btn-icon">🔄</i>
+          Reset
+        </button>
+        <button class="modal-btn primary" @click="applyChartFilters">
+          <i class="btn-icon">✓</i>
+          Apply Filters
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Enhanced Camera Modal -->
+  <CameraModal :show="showCameraModal" @close="closeCameraModal" @success="onAttendanceSuccess" />
+
+  <!-- User Registration Modal -->
+  <UserRegistrationModal :show="showUserRegistrationModal" :existing-user="transformedUserToCapture"
+    @close="closeUserRegistrationModal" @success="onUserRegistrationSuccess" />
+
+  <!-- Chart Tooltip -->
+  <div v-if="chartTooltip.show" class="chart-tooltip" :style="chartTooltip.style">
+    <div class="tooltip-content">
+      <div class="tooltip-title">{{ chartTooltip.title }}</div>
+      <div class="tooltip-value">{{ chartTooltip.value }}</div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useAuthStore, useDashboardStore } from '../stores/counter'
 import { useRouter } from 'vue-router'
 import { userAPI, dashboardAPI, adminAPI } from '../services/api'
@@ -843,6 +1229,14 @@ interface ChartTooltip {
   style: Record<string, string>
 }
 
+interface WeeklyPatternDay {
+  name?: string
+  day?: string
+  count?: number
+  average?: number
+  percentage?: number
+}
+
 // Store initialization
 const router = useRouter()
 const authStore = useAuthStore()
@@ -851,6 +1245,9 @@ const dashboardStore = useDashboardStore()
 // Reactive state
 const activeTab = ref<string>('analytics')
 const isLoading = ref<boolean>(false)
+const analyticsLoading = ref<boolean>(false)
+const noticesLoading = ref<boolean>(false)
+const managementLoading = ref<boolean>(false)
 const showCameraModal = ref<boolean>(false)
 const showUserRegistrationModal = ref<boolean>(false)
 const loadingUsers = ref<boolean>(false)
@@ -858,6 +1255,18 @@ const users = ref<User[]>([])
 const userToCapture = ref<User | null>(null)
 const notices = ref<Notice[]>([])
 const attendanceData = ref<AttendanceRecord[]>([])
+
+// Enhanced analytics features
+const weeklyViewMode = ref<string>('Percentage')
+const performanceInsights = ref<any>(null)
+
+// Carousel functionality
+const currentSlideIndex = ref<number>(0)
+const slideWidth = ref<number>(100)
+const autoSlideEnabled = ref<boolean>(false)
+const autoSlideInterval = ref<NodeJS.Timeout | null>(null)
+const carouselWrapper = ref<HTMLElement | null>(null)
+const carouselTrack = ref<HTMLElement | null>(null)
 
 // Enhanced notice features
 const noticeFilter = ref<string>('all')
@@ -889,6 +1298,7 @@ const attendanceChart = ref<any[]>([])
 const weeklyPattern = ref<any[]>([])
 const recentActivity = ref<ActivityRecord[]>([])
 const achievements = ref<Achievement[]>([])
+const analytics = ref<any>(null)
 
 // Class management data (Admin)
 const classConfig = ref<ClassConfig>({
@@ -1103,7 +1513,7 @@ const formatRole = (type: string) => {
   return roles[type] || 'User'
 }
 
-const getProgressClass = (percentage: number) => {
+const getHeatmapProgressClass = (percentage: number) => {
   if (percentage >= 80) return 'high'
   if (percentage >= 60) return 'medium'
   return 'low'
@@ -1126,6 +1536,50 @@ const getClassStatusText = (cls: any) => {
     case 'active': return 'In Progress'
     case 'completed': return 'Completed'
     default: return 'Unknown'
+  }
+}
+
+// Advanced Chart Methods
+const calculateAverageRate = () => {
+  if (attendanceChart.value.length === 0) return 0
+  const total = attendanceChart.value.reduce((sum, month) => sum + getChartHeight(month), 0)
+  return Math.round(total / attendanceChart.value.length)
+}
+
+const getPeakMonth = () => {
+  if (attendanceChart.value.length === 0) return 'N/A'
+  const peak = attendanceChart.value.reduce((max, month) =>
+    getChartHeight(month) > getChartHeight(max) ? month : max
+  )
+  return getChartLabel(peak)
+}
+
+const getAdvancedGradient = (month: any, index: number) => {
+  const percentage = getChartHeight(month)
+  const hue = 180 + (percentage * 1.8) // Blue to green spectrum
+  const saturation = 70 + (percentage * 0.3)
+  const lightness = 45 + (percentage * 0.2)
+
+  return `linear-gradient(135deg, 
+    hsl(${hue}, ${saturation}%, ${lightness}%) 0%,
+    hsl(${hue + 20}, ${saturation + 10}%, ${lightness + 10}%) 50%,
+    hsl(${hue + 40}, ${saturation + 20}%, ${lightness + 20}%) 100%)`
+}
+
+// Enhanced Chart Tooltip
+const showAdvancedTooltip = (data: any, event: MouseEvent, index: number) => {
+  const percentage = getChartHeight(data)
+  const value = getChartValue(data)
+  const label = getChartLabel(data)
+
+  chartTooltip.value = {
+    show: true,
+    title: `${label} Analytics`,
+    value: `${value} ${authStore.isAdmin ? 'attendances' : 'days'} (${Math.round(percentage)}%)`,
+    style: {
+      left: event.clientX + 15 + 'px',
+      top: event.clientY - 15 + 'px'
+    }
   }
 }
 
@@ -1373,6 +1827,309 @@ const loadDashboardData = async () => {
   }
 }
 
+// Enhanced Analytics Methods
+const refreshAnalytics = async () => {
+  analyticsLoading.value = true
+  try {
+    if (authStore.isAdmin) {
+      const analyticsResponse = await adminAPI.getAnalytics()
+      if (analyticsResponse.data) {
+        attendanceChart.value = analyticsResponse.data.monthly_trend || []
+        weeklyPattern.value = analyticsResponse.data.weekly_pattern || []
+        recentActivity.value = analyticsResponse.data.recent_system_activity || []
+      }
+    } else {
+      const analyticsResponse = await userAPI.getUserAnalytics()
+      if (analyticsResponse.data) {
+        attendanceChart.value = analyticsResponse.data.monthly_trend || []
+        weeklyPattern.value = analyticsResponse.data.day_frequency || []
+        recentActivity.value = analyticsResponse.data.recent_attendance || []
+        performanceInsights.value = analyticsResponse.data.performance_insights || null
+      }
+    }
+  } catch (error) {
+    console.error('Error refreshing analytics:', error)
+  } finally {
+    analyticsLoading.value = false
+  }
+}
+
+// Chart filtering state
+const showFilterModal = ref<boolean>(false)
+const chartFilters = ref({
+  dateRange: 'all', // 'all', 'last3months', 'last6months', 'thisyear'
+  attendanceThreshold: 0, // minimum attendance percentage
+  sortBy: 'date', // 'date', 'attendance', 'alphabetical'
+  sortOrder: 'asc' // 'asc', 'desc'
+})
+
+const filteredChartData = computed(() => {
+  let data = [...attendanceChart.value]
+
+  // Apply date range filter
+  if (chartFilters.value.dateRange !== 'all') {
+    const now = new Date()
+    let cutoffDate = new Date()
+
+    switch (chartFilters.value.dateRange) {
+      case 'last3months':
+        cutoffDate.setMonth(now.getMonth() - 3)
+        break
+      case 'last6months':
+        cutoffDate.setMonth(now.getMonth() - 6)
+        break
+      case 'thisyear':
+        cutoffDate = new Date(now.getFullYear(), 0, 1)
+        break
+    }
+
+    data = data.filter(item => {
+      const itemDate = new Date(item.month || item.date || '2024-01-01')
+      return itemDate >= cutoffDate
+    })
+  }
+
+  // Apply attendance threshold filter
+  if (chartFilters.value.attendanceThreshold > 0) {
+    data = data.filter(item => {
+      const percentage = getChartHeight(item)
+      return percentage >= chartFilters.value.attendanceThreshold
+    })
+  }
+
+  // Apply sorting
+  data.sort((a, b) => {
+    let aValue, bValue
+
+    switch (chartFilters.value.sortBy) {
+      case 'attendance':
+        aValue = getChartHeight(a)
+        bValue = getChartHeight(b)
+        break
+      case 'alphabetical':
+        aValue = getChartLabel(a)
+        bValue = getChartLabel(b)
+        break
+      case 'date':
+      default:
+        aValue = new Date(a.month || a.date || '2024-01-01').getTime()
+        bValue = new Date(b.month || b.date || '2024-01-01').getTime()
+        break
+    }
+
+    if (chartFilters.value.sortOrder === 'desc') {
+      return aValue < bValue ? 1 : -1
+    }
+    return aValue > bValue ? 1 : -1
+  })
+
+  return data
+})
+
+const filterChart = () => {
+  showFilterModal.value = true
+}
+
+const applyChartFilters = () => {
+  // The computed property will automatically update the chart
+  showFilterModal.value = false
+}
+
+const resetChartFilters = () => {
+  chartFilters.value = {
+    dateRange: 'all',
+    attendanceThreshold: 0,
+    sortBy: 'date',
+    sortOrder: 'asc'
+  }
+}
+
+const exportChart = () => {
+  // Implement chart export logic
+  console.log('Export chart functionality')
+}
+
+const toggleWeeklyView = () => {
+  weeklyViewMode.value = weeklyViewMode.value === 'Percentage' ? 'Count' : 'Percentage'
+}
+
+// Carousel functionality
+const slideIndicators = computed(() => {
+  if (!weeklyPattern.value.length) return []
+  const cardsPerSlide = getCardsPerSlide()
+  return Array.from({ length: Math.ceil(weeklyPattern.value.length / cardsPerSlide) }, (_, i) => i)
+})
+
+const getCardsPerSlide = () => {
+  if (typeof window === 'undefined') return 3
+  const width = window.innerWidth
+  if (width < 480) return 1
+  if (width < 768) return 2
+  if (width < 1024) return 2
+  return 3
+}
+
+const slideWeeklyCards = (direction: 'prev' | 'next') => {
+  const maxIndex = slideIndicators.value.length - 1
+
+  if (direction === 'next' && currentSlideIndex.value < maxIndex) {
+    currentSlideIndex.value++
+  } else if (direction === 'prev' && currentSlideIndex.value > 0) {
+    currentSlideIndex.value--
+  }
+
+  updateSlideWidth()
+}
+
+const goToSlide = (index: number) => {
+  currentSlideIndex.value = index
+  updateSlideWidth()
+}
+
+const updateSlideWidth = () => {
+  const cardsPerSlide = getCardsPerSlide()
+  slideWidth.value = 100 / cardsPerSlide
+}
+
+const toggleAutoSlide = () => {
+  autoSlideEnabled.value = !autoSlideEnabled.value
+
+  if (autoSlideEnabled.value) {
+    startAutoSlide()
+  } else {
+    stopAutoSlide()
+  }
+}
+
+const startAutoSlide = () => {
+  if (autoSlideInterval.value) clearInterval(autoSlideInterval.value)
+
+  autoSlideInterval.value = setInterval(() => {
+    const maxIndex = slideIndicators.value.length - 1
+    if (currentSlideIndex.value >= maxIndex) {
+      currentSlideIndex.value = 0
+    } else {
+      currentSlideIndex.value++
+    }
+    updateSlideWidth()
+  }, 4000)
+}
+
+const stopAutoSlide = () => {
+  if (autoSlideInterval.value) {
+    clearInterval(autoSlideInterval.value)
+    autoSlideInterval.value = null
+  }
+}
+
+// Handle window resize for responsive carousel
+const handleCarouselResize = () => {
+  updateSlideWidth()
+  // Reset to first slide if current slide is out of bounds
+  const maxIndex = slideIndicators.value.length - 1
+  if (currentSlideIndex.value > maxIndex) {
+    currentSlideIndex.value = 0
+  }
+}
+
+// Touch/Swipe functionality for mobile
+let touchStartX = 0
+let touchEndX = 0
+
+const handleTouchStart = (e: TouchEvent) => {
+  touchStartX = e.changedTouches[0].screenX
+}
+
+const handleTouchEnd = (e: TouchEvent) => {
+  touchEndX = e.changedTouches[0].screenX
+  handleSwipeGesture()
+}
+
+const handleSwipeGesture = () => {
+  const swipeThreshold = 50
+  const swipeDistance = touchStartX - touchEndX
+
+  if (Math.abs(swipeDistance) > swipeThreshold) {
+    if (swipeDistance > 0) {
+      // Swipe left - next slide
+      slideWeeklyCards('next')
+    } else {
+      // Swipe right - previous slide
+      slideWeeklyCards('prev')
+    }
+  }
+}
+
+// Chart helper methods
+const getChartHeight = (month: any) => {
+  if (authStore.isAdmin) {
+    // For admin, use attendance numbers and scale them properly
+    const maxAttendance = Math.max(...attendanceChart.value.map(m => m.attendance || m.students || 0))
+    const currentValue = month.attendance || month.students || 0
+    return maxAttendance > 0 ? Math.min((currentValue / maxAttendance) * 100, 100) : 0
+  } else {
+    // For users, treat attendance as days and scale to percentage
+    const maxDays = 31 // Maximum days in a month
+    const currentDays = month.attendance || month.days || 0
+    return Math.min((currentDays / maxDays) * 100, 100)
+  }
+}
+
+const getChartGradient = (month: any) => {
+  const percentage = getChartHeight(month)
+  if (percentage >= 80) return 'linear-gradient(135deg, #22c55e, #16a34a)'
+  if (percentage >= 60) return 'linear-gradient(135deg, #3b82f6, #1d4ed8)'
+  if (percentage >= 40) return 'linear-gradient(135deg, #f59e0b, #d97706)'
+  return 'linear-gradient(135deg, #ef4444, #dc2626)'
+}
+
+const getChartLabel = (month: any) => {
+  if (month.month) {
+    // Handle full month names like "Aug 2024"
+    const parts = month.month.split(' ')
+    return parts[0] // Return just "Aug"
+  }
+  return month.name || 'N/A'
+}
+
+const getChartValue = (month: any) => {
+  if (authStore.isAdmin) {
+    return month.attendance || month.students || 0
+  } else {
+    return month.attendance || month.days || 0
+  }
+}
+
+// Weekly pattern helper methods
+const getDayName = (day: any) => {
+  return day.day || day.name || 'Unknown'
+}
+
+const getDayPercentage = (day: any) => {
+  if (weeklyViewMode.value === 'Count') {
+    return Math.min((day.count || day.average || 0) * 10, 100)
+  }
+  return day.percentage || ((day.count || day.average || 0) / 5) * 100
+}
+
+const getDayCount = (day: any) => {
+  return day.count || day.average || 0
+}
+
+const getProgressGradient = (percentage: number) => {
+  if (percentage >= 80) return 'linear-gradient(90deg, #22c55e, #16a34a)'
+  if (percentage >= 60) return 'linear-gradient(90deg, #3b82f6, #1d4ed8)'
+  if (percentage >= 40) return 'linear-gradient(90deg, #f59e0b, #d97706)'
+  return 'linear-gradient(90deg, #ef4444, #dc2626)'
+}
+
+const getProgressClass = (percentage: number) => {
+  if (percentage >= 80) return 'excellent'
+  if (percentage >= 60) return 'good'
+  if (percentage >= 40) return 'average'
+  return 'poor'
+}
+
 // Activity refresh function
 const refreshActivity = async () => {
   try {
@@ -1384,9 +2141,13 @@ const refreshActivity = async () => {
       }
     } else {
       // Reload user analytics for students
-      const analyticsResponse = await userAPI.getMyAnalytics()
-      if (analyticsResponse.data?.recent_activity) {
-        recentActivity.value = analyticsResponse.data.recent_activity
+      const analyticsResponse = await userAPI.getUserAnalytics()
+      if (analyticsResponse.data?.recent_attendance) {
+        recentActivity.value = analyticsResponse.data.recent_attendance.map(item => ({
+          ...item,
+          status: 'present',
+          user_name: authStore.user?.name || 'You'
+        }))
       }
     }
   } catch (error) {
@@ -1614,6 +2375,21 @@ onMounted(() => {
   } else {
     loadUserData()
   }
+
+  // Initialize carousel
+  updateSlideWidth()
+
+  // Add window resize listener for responsive carousel
+  window.addEventListener('resize', handleCarouselResize)
+})
+
+// Cleanup on unmount
+onUnmounted(() => {
+  // Remove window resize listener
+  window.removeEventListener('resize', handleCarouselResize)
+
+  // Stop auto slide if running
+  stopAutoSlide()
 })
 </script>
 
@@ -2368,6 +3144,737 @@ onMounted(() => {
   border: none;
 }
 
+/* Advanced Chart Panel Styles */
+.advanced-chart-panel {
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(25px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 32px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.advanced-chart-panel:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+  border-color: rgba(78, 205, 196, 0.3);
+}
+
+.panel-header-advanced {
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 2.5rem 3rem 1.5rem;
+  background: linear-gradient(135deg, rgba(78, 205, 196, 0.05), rgba(69, 183, 209, 0.05));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+}
+
+.panel-header-advanced::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #8A2BE2, #4ecdc4, #45b7d1, #96ceb4, #feca57);
+  background-size: 400% 100%;
+  animation: gradientFlow 4s ease-in-out infinite;
+}
+
+.header-left {
+  flex: 1;
+}
+
+.title-icon-container {
+  position: relative;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-glow-effect {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  background: radial-gradient(circle, rgba(78, 205, 196, 0.3) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: pulse 3s infinite;
+}
+
+.panel-subtitle {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1rem;
+  margin: 0;
+}
+
+.panel-controls-advanced {
+  display: flex;
+  align-items: center;
+}
+
+.control-group {
+  display: flex;
+  gap: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.5rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.control-btn-modern {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.9);
+  padding: 0.75rem 1.25rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.control-btn-modern.primary {
+  background: linear-gradient(135deg, #4ecdc4, #45b7d1);
+  border: none;
+  color: white;
+  box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+}
+
+.control-btn-modern:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.control-btn-modern.primary:hover {
+  box-shadow: 0 8px 30px rgba(78, 205, 196, 0.5);
+}
+
+.btn-ripple {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.5s ease;
+}
+
+.control-btn-modern:active .btn-ripple {
+  width: 100%;
+  height: 100%;
+}
+
+/* Chart Area Advanced */
+.chart-area-advanced {
+  padding: 0;
+  min-height: 500px;
+}
+
+.sophisticated-chart {
+  padding: 2rem 3rem 3rem;
+}
+
+.chart-header-advanced {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2.5rem;
+  gap: 2rem;
+}
+
+.chart-title-section {
+  flex: 1;
+}
+
+.chart-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 1rem;
+}
+
+.chart-metrics {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.metric-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.metric-label {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.metric-value {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: white;
+}
+
+.metric-value.trend-up {
+  color: #22c55e;
+}
+
+.chart-legend-advanced {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.legend-item-advanced {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+}
+
+.legend-indicator {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  position: relative;
+}
+
+.legend-indicator.primary-gradient {
+  background: linear-gradient(135deg, #4ecdc4, #45b7d1);
+  box-shadow: 0 2px 8px rgba(78, 205, 196, 0.3);
+}
+
+.legend-indicator.secondary-gradient {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+/* Advanced Chart Container */
+.chart-container-advanced {
+  position: relative;
+  height: 350px;
+  margin: 2rem 0;
+  display: flex;
+  align-items: end;
+  gap: 1rem;
+}
+
+.chart-y-axis-advanced {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: space-between;
+  height: 100%;
+  width: 60px;
+  position: relative;
+}
+
+.y-label-advanced {
+  display: flex;
+  align-items: center;
+  position: relative;
+  height: 20%;
+}
+
+.label-text {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 600;
+  width: 50px;
+  text-align: right;
+}
+
+.grid-line {
+  position: absolute;
+  left: 55px;
+  right: -2000px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  pointer-events: none;
+}
+
+.chart-bars-advanced {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: end;
+  gap: 1rem;
+  position: relative;
+  z-index: 2;
+}
+
+.chart-column-advanced {
+  flex: 1;
+  height: 100%;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: columnRise 1s ease var(--delay);
+}
+
+@keyframes columnRise {
+  from {
+    transform: translateY(100%) scaleY(0);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0) scaleY(1);
+    opacity: 1;
+  }
+}
+
+.chart-column-advanced:hover {
+  transform: translateY(-8px) scale(1.05);
+  z-index: 10;
+}
+
+.column-background {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.column-bar-advanced {
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: end;
+}
+
+.column-fill-advanced {
+  width: 100%;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  animation: fillUp 1.5s ease var(--delay);
+}
+
+@keyframes fillUp {
+  from {
+    height: 0% !important;
+  }
+
+  to {
+    height: var(--fill-height);
+  }
+}
+
+.fill-animation {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+
+  100% {
+    left: 100%;
+  }
+}
+
+.column-glow {
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: inherit;
+  border-radius: 14px;
+  filter: blur(8px);
+  opacity: 0.5;
+  z-index: -1;
+}
+
+.data-point {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.point-pulse {
+  width: 8px;
+  height: 8px;
+  background: #4ecdc4;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+.target-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #f59e0b, #d97706);
+  border-radius: 1px;
+  opacity: 0.7;
+  z-index: 1;
+}
+
+.target-line::before {
+  content: 'Target';
+  position: absolute;
+  right: 0;
+  top: -20px;
+  font-size: 0.7rem;
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.column-label-advanced {
+  position: absolute;
+  bottom: -35px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.column-value-advanced {
+  position: absolute;
+  bottom: -55px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.value-number {
+  font-size: 1rem;
+  font-weight: 800;
+  color: white;
+}
+
+.value-unit {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Chart Overlay Effects */
+.chart-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.gradient-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(to top, rgba(78, 205, 196, 0.05), transparent);
+  border-radius: 0 0 12px 12px;
+}
+
+.particle-effect {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: rgba(78, 205, 196, 0.6);
+  border-radius: 50%;
+  animation: float 8s ease-in-out infinite var(--delay);
+}
+
+.particle:nth-child(odd) {
+  background: rgba(69, 183, 209, 0.6);
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0) translateX(0) scale(1);
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+
+  50% {
+    transform: translateY(-100px) translateX(20px) scale(1.2);
+    opacity: 0.8;
+  }
+}
+
+/* Chart Footer */
+.chart-footer-advanced {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.insight-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.insight-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.insight-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(78, 205, 196, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.insight-card:hover::before {
+  left: 100%;
+}
+
+.insight-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(78, 205, 196, 0.3);
+  transform: translateY(-2px);
+}
+
+.insight-icon {
+  font-size: 1.5rem;
+  background: rgba(78, 205, 196, 0.15);
+  padding: 0.75rem;
+  border-radius: 12px;
+  border: 1px solid rgba(78, 205, 196, 0.3);
+}
+
+.insight-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.insight-title {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.insight-value {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: white;
+}
+
+/* Enhanced Empty State */
+.empty-chart-advanced {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  padding: 3rem;
+}
+
+.empty-illustration-advanced {
+  text-align: center;
+  max-width: 400px;
+}
+
+.empty-icon-container {
+  position: relative;
+  margin-bottom: 2rem;
+  display: inline-block;
+}
+
+.icon-background {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle, rgba(78, 205, 196, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: pulse 3s infinite;
+}
+
+.empty-icon-animated {
+  font-size: 4rem;
+  color: rgba(255, 255, 255, 0.4);
+  position: relative;
+  z-index: 2;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+
+  0%,
+  20%,
+  50%,
+  80%,
+  100% {
+    transform: translateY(0);
+  }
+
+  40% {
+    transform: translateY(-10px);
+  }
+
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+.icon-particles {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.icon-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: rgba(78, 205, 196, 0.6);
+  border-radius: 50%;
+  animation: particleFloat 4s ease-in-out infinite var(--delay);
+}
+
+@keyframes particleFloat {
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0;
+  }
+
+  50% {
+    transform: translate(var(--x, 30px), var(--y, -30px)) scale(1.5);
+    opacity: 1;
+  }
+}
+
+.empty-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 1rem;
+}
+
+.empty-description {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.empty-action-btn-advanced {
+  background: linear-gradient(135deg, #4ecdc4, #45b7d1);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 16px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(78, 205, 196, 0.3);
+}
+
+.btn-shine {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.empty-action-btn-advanced:hover .btn-shine {
+  left: 100%;
+}
+
+.empty-action-btn-advanced:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(78, 205, 196, 0.4);
+}
+
 /* Chart Area */
 .chart-area {
   padding: 2rem;
@@ -2459,68 +3966,809 @@ onMounted(() => {
   opacity: 0.5;
 }
 
-/* Heatmap */
-.heatmap-container {
-  padding: 2rem;
+/* Weekly Attendance Pattern Panel */
+.weekly-attendance-panel {
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(25px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 32px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.day-heatmap {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  margin-bottom: 0.5rem;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 12px;
-  transition: all 0.3s ease;
+.weekly-attendance-panel:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+  border-color: rgba(78, 205, 196, 0.3);
 }
 
-.day-heatmap:hover {
-  background: rgba(255, 255, 255, 0.05);
-  transform: translateX(5px);
+/* Panel Header Modern */
+.panel-header-modern {
+  background: linear-gradient(135deg, rgba(78, 205, 196, 0.05), rgba(69, 183, 209, 0.05));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+  padding: 2.5rem 3rem 2rem;
 }
 
-.day-header {
+.panel-header-modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #8A2BE2, #4ecdc4, #45b7d1, #96ceb4, #feca57);
+  background-size: 400% 100%;
+  animation: gradientFlow 4s ease-in-out infinite;
+}
+
+.header-content {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
+  gap: 2rem;
+}
+
+.title-section {
+  display: flex;
   align-items: center;
-  min-width: 100px;
+  gap: 1.5rem;
+  flex: 1;
 }
 
-.day-name {
-  font-weight: 600;
+.title-icon-wrapper {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.title-icon-wrapper .title-icon {
+  font-size: 2rem;
+  z-index: 2;
+  position: relative;
+}
+
+.title-text {
+  flex: 1;
+}
+
+.panel-title {
+  font-size: 1.75rem;
+  font-weight: 800;
   color: white;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.2;
 }
 
-.day-percentage {
-  font-size: 0.875rem;
+.panel-subtitle {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1rem;
+  margin: 0;
+  font-weight: 500;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+}
+
+.control-btn-modern.secondary {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: rgba(255, 255, 255, 0.8);
 }
 
-.day-progress-bar {
-  flex: 1;
-  height: 8px;
+.control-btn-modern.secondary:hover {
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
+  color: white;
+}
+
+/* Panel Content */
+.panel-content {
+  padding: 2.5rem 3rem 3rem;
+}
+
+/* Weekly Carousel Container */
+.weekly-carousel-container {
+  position: relative;
   overflow: hidden;
 }
 
-.progress-fill {
+/* Carousel Navigation */
+.carousel-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding: 0 1rem;
+}
+
+.nav-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: white;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 1.5rem;
+  font-weight: bold;
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-btn:hover:not(:disabled) {
+  background: rgba(78, 205, 196, 0.2);
+  border-color: rgba(78, 205, 196, 0.4);
+  transform: scale(1.1);
+  box-shadow: 0 8px 25px rgba(78, 205, 196, 0.3);
+}
+
+.nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.nav-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
   height: 100%;
-  border-radius: 4px;
-  transition: width 0.8s ease;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
 }
 
-.progress-fill.high {
-  background: linear-gradient(90deg, #22c55e, #16a34a);
+.nav-btn:hover:not(:disabled)::before {
+  left: 100%;
 }
 
-.progress-fill.medium {
-  background: linear-gradient(90deg, #f59e0b, #d97706);
+.nav-icon {
+  z-index: 2;
+  position: relative;
 }
 
-.progress-fill.low {
-  background: linear-gradient(90deg, #ef4444, #dc2626);
+/* Slide Indicators */
+.slide-indicators {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.slide-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.slide-indicator.active {
+  background: linear-gradient(135deg, #4ecdc4, #45b7d1);
+  transform: scale(1.3);
+  box-shadow: 0 4px 12px rgba(78, 205, 196, 0.4);
+}
+
+.slide-indicator:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.5);
+  transform: scale(1.1);
+}
+
+/* Carousel Wrapper */
+.carousel-wrapper {
+  overflow: hidden;
+  border-radius: 20px;
+  position: relative;
+}
+
+.weekly-carousel-track {
+  display: flex;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  gap: 1.5rem;
+}
+
+/* Carousel Slide */
+.carousel-slide {
+  flex: 0 0 auto;
+  width: calc(33.333% - 1rem);
+  min-width: 320px;
+}
+
+/* Carousel Info */
+.carousel-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2rem;
+  padding: 1rem 1.5rem;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.slide-counter {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 600;
+}
+
+.carousel-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.control-btn-mini {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+}
+
+.control-btn-mini:hover {
+  background: rgba(78, 205, 196, 0.2);
+  border-color: rgba(78, 205, 196, 0.4);
+  transform: scale(1.1);
+}
+
+.control-icon {
+  font-size: 0.9rem;
+}
+
+/* Day Card */
+.day-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slideInUp 0.6s ease var(--delay);
+  cursor: pointer;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.day-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(78, 205, 196, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.day-card:hover::before {
+  left: 100%;
+}
+
+.day-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(78, 205, 196, 0.3);
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Day Header */
+.day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.day-info {
+  flex: 1;
+}
+
+.day-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 0.5rem 0;
+}
+
+.day-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: 1px solid;
+}
+
+.day-badge.high {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.day-badge.medium {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.day-badge.low {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.day-trend {
+  font-size: 1.5rem;
+  font-weight: bold;
+  padding: 0.5rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.day-trend.positive {
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.2);
+}
+
+.day-trend.negative {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+/* Progress Section */
+.progress-section {
+  margin-bottom: 1.5rem;
+}
+
+.progress-bar-container {
+  margin-bottom: 1rem;
+}
+
+.progress-bar-track {
+  height: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  position: relative;
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.progress-glow {
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: inherit;
+  border-radius: 8px;
+  filter: blur(4px);
+  opacity: 0.6;
+  z-index: -1;
+}
+
+.progress-shine {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: shine 2s infinite;
+}
+
+@keyframes shine {
+  0% {
+    left: -100%;
+  }
+
+  100% {
+    left: 100%;
+  }
+}
+
+.progress-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: white;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+/* Day Details */
+.day-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+.detail-value {
+  font-size: 0.875rem;
+  color: white;
+  font-weight: 600;
+}
+
+.detail-value.status {
+  padding: 0.25rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-value.status.high {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+}
+
+.detail-value.status.medium {
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+}
+
+.detail-value.status.low {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+}
+
+.empty-illustration {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+.empty-icon-container {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-icon-bg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(78, 205, 196, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: pulse 3s infinite;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  opacity: 0.7;
+  z-index: 2;
+}
+
+.icon-particles {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: rgba(78, 205, 196, 0.6);
+  border-radius: 50%;
+  animation: float 6s ease-in-out infinite var(--delay);
+}
+
+.particle:nth-child(odd) {
+  background: rgba(69, 183, 209, 0.6);
+}
+
+.empty-content {
+  max-width: 300px;
+}
+
+.empty-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 1rem 0;
+}
+
+.empty-description {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1rem;
+  line-height: 1.5;
+  margin: 0 0 2rem 0;
+}
+
+.empty-action-btn {
+  background: linear-gradient(135deg, #4ecdc4, #45b7d1);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.empty-action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(78, 205, 196, 0.4);
+}
+
+.empty-action-btn .btn-icon {
+  font-size: 1rem;
+}
+
+/* Responsive Design for Carousel */
+@media (max-width: 1024px) {
+  .carousel-slide {
+    width: calc(50% - 0.75rem);
+    min-width: 280px;
+  }
+
+  .panel-content {
+    padding: 2rem;
+  }
+
+  .panel-header-modern {
+    padding: 2rem;
+  }
+
+  .carousel-navigation {
+    padding: 0 0.5rem;
+  }
+
+  .nav-btn {
+    width: 45px;
+    height: 45px;
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .carousel-slide {
+    width: calc(100% - 1rem);
+    min-width: 250px;
+  }
+
+  .header-content {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .title-section {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  .panel-content {
+    padding: 1.5rem;
+  }
+
+  .panel-header-modern {
+    padding: 1.5rem;
+  }
+
+  .day-card {
+    padding: 1.5rem;
+  }
+
+  .carousel-navigation {
+    margin-bottom: 1.5rem;
+    padding: 0;
+  }
+
+  .nav-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+  }
+
+  .slide-indicators {
+    gap: 0.5rem;
+  }
+
+  .slide-indicator {
+    width: 10px;
+    height: 10px;
+  }
+
+  .carousel-info {
+    margin-top: 1.5rem;
+    padding: 0.75rem 1rem;
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .carousel-slide {
+    width: 100%;
+    min-width: 200px;
+  }
+
+  .panel-content {
+    padding: 1rem;
+  }
+
+  .panel-header-modern {
+    padding: 1rem;
+  }
+
+  .day-card {
+    padding: 1rem;
+  }
+
+  .panel-title {
+    font-size: 1.5rem;
+  }
+
+  .control-group {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .control-btn-modern {
+    width: 100%;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .carousel-navigation {
+    margin-bottom: 1rem;
+  }
+
+  .nav-btn {
+    width: 35px;
+    height: 35px;
+    font-size: 1rem;
+  }
+
+  .slide-indicators {
+    gap: 0.4rem;
+  }
+
+  .slide-indicator {
+    width: 8px;
+    height: 8px;
+  }
+
+  .carousel-info {
+    margin-top: 1rem;
+    padding: 0.5rem;
+  }
+
+  .slide-counter {
+    font-size: 0.8rem;
+  }
+
+  .control-btn-mini {
+    width: 35px;
+    height: 35px;
+    font-size: 0.8rem;
+  }
+
+  .day-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .day-info {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .day-trend {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+  }
+
+  .progress-stats {
+    justify-content: center;
+  }
 }
 
 /* Timeline */
@@ -4665,399 +6913,697 @@ onMounted(() => {
 .tooltip-value {
   font-weight: 500;
 }
-</style>
+
+/* Chart Filter Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+.filter-modal {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 0;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow: hidden;
+  animation: slideInUp 0.4s ease;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.modal-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: white;
+  margin: 0;
+}
+
+.modal-icon {
+  font-size: 1.5rem;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+}
+
+.modal-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  transform: rotate(90deg);
+}
+
+.modal-content {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.filter-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.filter-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 0.5rem;
+}
+
+.filter-select {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  color: white;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.filter-select:focus {
+  border-color: #4ecdc4;
+  box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.2);
+}
+
+.filter-select option {
+  background: #1a1a1a;
+  color: white;
+}
+
+.range-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.filter-range {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.filter-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(135deg, #4ecdc4, #45b7d1);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(78, 205, 196, 0.3);
+  transition: all 0.3s ease;
+}
+
+.filter-range::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(78, 205, 196, 0.5);
+}
+
+.filter-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(135deg, #4ecdc4, #45b7d1);
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 8px rgba(78, 205, 196, 0.3);
+}
+
+.range-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #4ecdc4;
+  min-width: 50px;
+  text-align: center;
+  background: rgba(78, 205, 196, 0.1);
+  padding: 0.25rem 0.75rem;
+  border-radius: 8px;
+}
+
+.radio-group {
+  display: flex;
+  gap: 1rem;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.radio-option:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.radio-option input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #4ecdc4;
+}
+
+.radio-text {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.modal-footer {
+  display: flex;
+  gap: 1rem;
+  padding: 1.5rem 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.modal-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.modal-btn.secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.modal-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  transform: translateY(-1px);
+}
+
+.modal-btn.primary {
+  background: linear-gradient(135deg, #4ecdc4, #45b7d1);
+  color: white;
+  box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+}
+
+.modal-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(78, 205, 196, 0.4);
+}
+
+.modal-btn .btn-icon {
+  font-size: 1rem;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Responsive adjustments for filter modal */
+@media (max-width: 768px) {
+  .filter-modal {
+    width: 95%;
+    margin: 1rem;
+  }
+
+  .modal-header,
+  .modal-content,
+  .modal-footer {
+    padding: 1rem 1.5rem;
+  }
+
+  .radio-group {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .modal-footer {
+    flex-direction: column;
+  }
+}
 
 /* ===== RESPONSIVE HEADER FIXES ===== */
 
 /* Tablet and smaller screens */
 @media (max-width: 1024px) {
-.dashboard-header {
-padding: 1.5rem;
-margin-bottom: 2rem;
-border-radius: 20px;
-}
+  .dashboard-header {
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border-radius: 20px;
+  }
 
-.header-content {
-gap: 1.5rem;
-}
+  .header-content {
+    gap: 1.5rem;
+  }
 
-.welcome-title {
-font-size: 2rem;
-}
+  .welcome-title {
+    font-size: 2rem;
+  }
 
-.avatar-circle {
-width: 60px;
-height: 60px;
-}
+  .avatar-circle {
+    width: 60px;
+    height: 60px;
+  }
 
-.avatar-text {
-font-size: 1.25rem;
-}
+  .avatar-text {
+    font-size: 1.25rem;
+  }
 
-.stats-preview {
-gap: 0.75rem;
-}
+  .stats-preview {
+    gap: 0.75rem;
+  }
 
-.stat-mini {
-min-width: 60px;
-padding: 0.5rem;
-}
+  .stat-mini {
+    min-width: 60px;
+    padding: 0.5rem;
+  }
 
-.primary-action-btn {
-padding: 0.75rem 1.5rem;
-}
+  .primary-action-btn {
+    padding: 0.75rem 1.5rem;
+  }
 }
 
 /* Mobile landscape and tablet portrait */
 @media (max-width: 768px) {
-.dashboard-header {
-padding: 1.25rem;
-margin-bottom: 1.5rem;
-border-radius: 16px;
-}
+  .dashboard-header {
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    border-radius: 16px;
+  }
 
-.header-content {
-flex-direction: column;
-align-items: stretch;
-gap: 1.5rem;
-}
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.5rem;
+  }
 
-.user-greeting {
-flex-direction: column;
-align-items: center;
-text-align: center;
-gap: 1rem;
-}
+  .user-greeting {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1rem;
+  }
 
-.greeting-text {
-width: 100%;
-}
+  .greeting-text {
+    width: 100%;
+  }
 
-.welcome-title {
-font-size: 1.75rem;
-text-align: center;
-line-height: 1.3;
-}
+  .welcome-title {
+    font-size: 1.75rem;
+    text-align: center;
+    line-height: 1.3;
+  }
 
-.role-subtitle {
-justify-content: center;
-flex-wrap: wrap;
-gap: 0.75rem;
-}
+  .role-subtitle {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
 
-.header-actions {
-align-items: center;
-width: 100%;
-}
+  .header-actions {
+    align-items: center;
+    width: 100%;
+  }
 
-.stats-preview {
-width: 100%;
-justify-content: center;
-margin-bottom: 1rem;
-}
+  .stats-preview {
+    width: 100%;
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
 
-.action-buttons {
-width: 100%;
-justify-content: center;
-flex-wrap: wrap;
-gap: 0.75rem;
-}
+  .action-buttons {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
 
-.primary-action-btn {
-flex: 1;
-min-width: 200px;
-max-width: 300px;
-justify-content: center;
-}
+  .primary-action-btn {
+    flex: 1;
+    min-width: 200px;
+    max-width: 300px;
+    justify-content: center;
+  }
 
-.secondary-action-btn {
-width: 48px;
-height: 48px;
-border-radius: 50%;
-display: flex;
-align-items: center;
-justify-content: center;
-}
+  .secondary-action-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 /* Mobile portrait */
 @media (max-width: 480px) {
-.dashboard-header {
-padding: 1rem;
-margin-bottom: 1rem;
-border-radius: 12px;
-}
+  .dashboard-header {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 12px;
+  }
 
-.header-content {
-gap: 1rem;
-}
+  .header-content {
+    gap: 1rem;
+  }
 
-.user-greeting {
-gap: 0.75rem;
-}
+  .user-greeting {
+    gap: 0.75rem;
+  }
 
-.avatar-circle {
-width: 50px;
-height: 50px;
-}
+  .avatar-circle {
+    width: 50px;
+    height: 50px;
+  }
 
-.avatar-text {
-font-size: 1rem;
-}
+  .avatar-text {
+    font-size: 1rem;
+  }
 
-.online-indicator {
-width: 12px;
-height: 12px;
-border-width: 2px;
-}
+  .online-indicator {
+    width: 12px;
+    height: 12px;
+    border-width: 2px;
+  }
 
-.welcome-title {
-font-size: 1.5rem;
-line-height: 1.4;
-}
+  .welcome-title {
+    font-size: 1.5rem;
+    line-height: 1.4;
+  }
 
-.role-subtitle {
-font-size: 0.875rem;
-gap: 0.5rem;
-}
+  .role-subtitle {
+    font-size: 0.875rem;
+    gap: 0.5rem;
+  }
 
-.role-chip {
-padding: 0.375rem 0.75rem;
-font-size: 0.75rem;
-border-radius: 16px;
-}
+  .role-chip {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    border-radius: 16px;
+  }
 
-.date-display {
-font-size: 0.75rem;
-}
+  .date-display {
+    font-size: 0.75rem;
+  }
 
-.stats-preview {
-gap: 0.5rem;
-}
+  .stats-preview {
+    gap: 0.5rem;
+  }
 
-.stat-mini {
-min-width: 50px;
-padding: 0.5rem 0.375rem;
-}
+  .stat-mini {
+    min-width: 50px;
+    padding: 0.5rem 0.375rem;
+  }
 
-.stat-number {
-font-size: 1rem;
-}
+  .stat-number {
+    font-size: 1rem;
+  }
 
-.stat-text {
-font-size: 0.625rem;
-}
+  .stat-text {
+    font-size: 0.625rem;
+  }
 
-.action-buttons {
-flex-direction: column;
-gap: 0.5rem;
-}
+  .action-buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
 
-.primary-action-btn {
-width: 100%;
-min-width: auto;
-max-width: none;
-padding: 1rem;
-font-size: 0.875rem;
-}
+  .primary-action-btn {
+    width: 100%;
+    min-width: auto;
+    max-width: none;
+    padding: 1rem;
+    font-size: 0.875rem;
+  }
 
-.btn-text {
-font-size: 0.875rem;
-}
+  .btn-text {
+    font-size: 0.875rem;
+  }
 
-.secondary-action-btn {
-width: 100%;
-height: 44px;
-border-radius: 12px;
-font-size: 1.25rem;
-}
+  .secondary-action-btn {
+    width: 100%;
+    height: 44px;
+    border-radius: 12px;
+    font-size: 1.25rem;
+  }
 }
 
 /* Very small screens */
 @media (max-width: 360px) {
-.dashboard-header {
-padding: 0.75rem;
-}
+  .dashboard-header {
+    padding: 0.75rem;
+  }
 
-.welcome-title {
-font-size: 1.25rem;
-word-break: break-word;
-hyphens: auto;
-}
+  .welcome-title {
+    font-size: 1.25rem;
+    word-break: break-word;
+    hyphens: auto;
+  }
 
-.role-subtitle {
-flex-direction: column;
-align-items: center;
-gap: 0.375rem;
-}
+  .role-subtitle {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.375rem;
+  }
 
-.stats-preview {
-flex-direction: column;
-gap: 0.375rem;
-}
+  .stats-preview {
+    flex-direction: column;
+    gap: 0.375rem;
+  }
 
-.stat-mini {
-width: 100%;
-display: flex;
-justify-content: space-between;
-align-items: center;
-padding: 0.5rem 0.75rem;
-}
+  .stat-mini {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+  }
 
-.stat-number {
-font-size: 1.125rem;
-}
+  .stat-number {
+    font-size: 1.125rem;
+  }
 
-.stat-text {
-font-size: 0.75rem;
-}
+  .stat-text {
+    font-size: 0.75rem;
+  }
 }
 
 /* Landscape orientation on mobile */
 @media (max-width: 768px) and (orientation: landscape) {
-.dashboard-header {
-padding: 1rem 1.25rem;
-}
+  .dashboard-header {
+    padding: 1rem 1.25rem;
+  }
 
-.header-content {
-flex-direction: row;
-align-items: center;
-}
+  .header-content {
+    flex-direction: row;
+    align-items: center;
+  }
 
-.user-greeting {
-flex-direction: row;
-text-align: left;
-flex: 1;
-}
+  .user-greeting {
+    flex-direction: row;
+    text-align: left;
+    flex: 1;
+  }
 
-.welcome-title {
-font-size: 1.5rem;
-text-align: left;
-}
+  .welcome-title {
+    font-size: 1.5rem;
+    text-align: left;
+  }
 
-.role-subtitle {
-justify-content: flex-start;
-}
+  .role-subtitle {
+    justify-content: flex-start;
+  }
 
-.header-actions {
-flex-direction: row;
-align-items: center;
-width: auto;
-}
+  .header-actions {
+    flex-direction: row;
+    align-items: center;
+    width: auto;
+  }
 
-.stats-preview {
-margin-bottom: 0;
-margin-right: 1rem;
-}
+  .stats-preview {
+    margin-bottom: 0;
+    margin-right: 1rem;
+  }
 
-.action-buttons {
-flex-direction: row;
-width: auto;
-}
+  .action-buttons {
+    flex-direction: row;
+    width: auto;
+  }
 
-.primary-action-btn {
-flex: none;
-min-width: 160px;
-}
+  .primary-action-btn {
+    flex: none;
+    min-width: 160px;
+  }
 }
 
 /* High DPI displays */
-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-.dashboard-header::before {
-height: 1px;
-}
+@media (-webkit-min-device-pixel-ratio: 2),
+(min-resolution: 192dpi) {
+  .dashboard-header::before {
+    height: 1px;
+  }
 
-.avatar-ring {
-border-width: 1px;
-}
+  .avatar-ring {
+    border-width: 1px;
+  }
 
-.online-indicator {
-border-width: 2px;
-}
+  .online-indicator {
+    border-width: 2px;
+  }
 }
 
 /* Accessibility - Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-.welcome-title,
-.avatar-ring,
-.online-indicator,
-.pulse-effect {
-animation: none !important;
-}
 
-.primary-action-btn:hover,
-.secondary-action-btn:hover {
-transform: none !important;
-}
+  .welcome-title,
+  .avatar-ring,
+  .online-indicator,
+  .pulse-effect {
+    animation: none !important;
+  }
+
+  .primary-action-btn:hover,
+  .secondary-action-btn:hover {
+    transform: none !important;
+  }
 }
 
 /* Dark mode adjustments for header */
 @media (prefers-color-scheme: light) {
-.dashboard-header {
-background: rgba(0, 0, 0, 0.02);
-border: 1px solid rgba(0, 0, 0, 0.08);
-}
+  .dashboard-header {
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+  }
 
-.welcome-title {
-background: linear-gradient(135deg, #8A2BE2, #4ecdc4, #45b7d1, #96ceb4, #feca57);
--webkit-background-clip: text;
--webkit-text-fill-color: transparent;
-background-clip: text;
-}
+  .welcome-title {
+    background: linear-gradient(135deg, #8A2BE2, #4ecdc4, #45b7d1, #96ceb4, #feca57);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
 
-.role-subtitle {
-color: rgba(0, 0, 0, 0.8);
-}
+  .role-subtitle {
+    color: rgba(0, 0, 0, 0.8);
+  }
 
-.date-display {
-color: rgba(0, 0, 0, 0.6);
-}
+  .date-display {
+    color: rgba(0, 0, 0, 0.6);
+  }
 
-.stat-number {
-color: #1a1a2e;
-}
+  .stat-number {
+    color: #1a1a2e;
+  }
 
-.stat-text {
-color: rgba(0, 0, 0, 0.7);
-}
+  .stat-text {
+    color: rgba(0, 0, 0, 0.7);
+  }
 }
 
 /* Touch device optimizations */
 @media (hover: none) and (pointer: coarse) {
-.primary-action-btn,
-.secondary-action-btn {
-min-height: 48px;
-touch-action: manipulation;
-}
 
-.primary-action-btn:active {
-transform: scale(0.98);
-}
+  .primary-action-btn,
+  .secondary-action-btn {
+    min-height: 48px;
+    touch-action: manipulation;
+  }
 
-.secondary-action-btn:active {
-transform: scale(0.95);
-}
+  .primary-action-btn:active {
+    transform: scale(0.98);
+  }
 
-.stat-mini {
-min-height: 44px;
-}
+  .secondary-action-btn:active {
+    transform: scale(0.95);
+  }
+
+  .stat-mini {
+    min-height: 44px;
+  }
 }
 
 /* Container width adjustments */
 @media (max-width: 1200px) {
-.dashboard-container {
-padding: 0 1.5rem;
-}
+  .dashboard-container {
+    padding: 0 1.5rem;
+  }
 }
 
 @media (max-width: 768px) {
-.dashboard-container {
-padding: 0 1rem;
-}
+  .dashboard-container {
+    padding: 0 1rem;
+  }
 }
 
 @media (max-width: 480px) {
-.dashboard-container {
-padding: 0 0.75rem;
+  .dashboard-container {
+    padding: 0 0.75rem;
+  }
 }
-}
+</style>

@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { mockAuthAPI, mockDashboardAPI, mockAdminAPI, isDemoMode } from './mockAuth'
+import { mockAuthAPI, mockDashboardAPI, mockAdminAPI, mockUserAPI, isDemoMode } from './mockAuth'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'
 
@@ -142,26 +142,73 @@ export const adminAPI = {
     }
     return api.get('/admin/recent-activity')
   },
+  
+  // Demo Data Management
+  populateDemoData: () => api.post('/admin/populate-demo-data'),
+  getDemoSummary: () => api.get('/admin/demo-summary'),
 }
 
 export const analyticsAPI = {
   getAttendanceTrends: () => api.get('/analytics/attendance-trends'),
 }
 
-export const profileAPI = {
-  getUserProfile: (userId: string) => api.get(`/profile/${userId}`),
-}
-
 export const userAPI = {
   login: (credentials: { username: string; password: string }) => 
     api.post('/user/login', credentials),
-  getMyAttendance: () => api.get('/user/attendance'),
-  getMyProfile: () => api.get('/user/profile'),
-  getNotices: () => api.get('/user/notices'),
-  markAttendance: () => api.post('/user/mark-attendance'),
+  getMyAttendance: () => {
+    if (isDemoMode()) {
+      return mockUserAPI.getMyAttendance()
+    }
+    return api.get('/user/my-attendance')
+  },
+  getMyProfile: () => {
+    if (isDemoMode()) {
+      return mockUserAPI.getMyProfile()
+    }
+    return api.get('/user/my-profile')
+  },
+  getUserAnalytics: () => {
+    if (isDemoMode()) {
+      return mockUserAPI.getUserAnalytics()
+    }
+    return api.get('/user/analytics')
+  },
+  getUserNotices: () => {
+    if (isDemoMode()) {
+      return mockUserAPI.getUserNotices()
+    }
+    return api.get('/user/notices')
+  },
+  getNotices: () => {
+    if (isDemoMode()) {
+      return mockUserAPI.getUserNotices()
+    }
+    return api.get('/user/notices')
+  },
+  markAttendance: () => {
+    if (isDemoMode()) {
+      return mockUserAPI.markAttendance()
+    }
+    return api.post('/user/mark-attendance')
+  },
   markAttendanceWithImage: (data: { image: string }) => api.post('/user/mark-attendance-with-image', data),
   startFaceScan: () => api.post('/user/start-face-scan'),
-  getMyAnalytics: () => api.get('/user/analytics'), // New endpoint
+  getMyAnalytics: () => {
+    if (isDemoMode()) {
+      return mockUserAPI.getUserAnalytics()
+    }
+    return api.get('/user/analytics')
+  },
+  getAttendanceStats: () => {
+    if (isDemoMode()) {
+      return mockUserAPI.getAttendanceStats()
+    }
+    return api.get('/user/attendance-stats')
+  },
+}
+
+export const profileAPI = {
+  getUserProfile: (userId: string) => api.get(`/profile/${userId}`),
 }
 
 export default api
