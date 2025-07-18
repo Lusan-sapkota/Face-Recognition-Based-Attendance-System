@@ -24,7 +24,13 @@
 
 *Built entirely from scratch with passion, precision, and the latest machine learning technologies*
 
-🌐 **Live Demo**: *Ready to be self-hosted by startups and schools. Contact me to share your self-hosting experience!*
+🌐 **Frontend Demo**: [https://face-recognition-based-attendance-s.vercel.app/](https://face-recognition-based-attendance-s.vercel.app/)
+
+> ⚠️ **Note:** This is a frontend-only demo. The backend is not hosted, so features requiring backend interaction (face recognition, real attendance, etc.) will not work. You can log in using demo credentials provided on the login page and explore the app with mock data.
+
+> 🛠️ **Backend:** The backend in this repository is fully workable and production-ready. You can self-host it locally or on your own server for complete functionality.
+
+> 💡 **Self-Hosting:** Deploy both frontend and backend for a complete, real-world experience. See instructions below.
 
 </div>
 
@@ -214,14 +220,16 @@ The frontend will start on `http://localhost:5173`
 
 ## 📱 Usage
 
-### 🔑 Default Login Credentials
+### 🔑 Demo Credentials (Frontend Demo)
+- Visit [https://face-recognition-based-attendance-s.vercel.app/](https://face-recognition-based-attendance-s.vercel.app/)
+- Demo credentials are shown on the login page
+- You can explore all features with mock data (no real backend)
 
+### 🔑 Default Login Credentials (Self-Hosted)
 #### Admin Access
-
-- **Password**: `admin123` (or as set in .env file - backend (do not expose in frontend))
+- **Password**: `admin123` (or as set in .env file - backend; do not expose in frontend)
 
 #### User Access
-
 - Users need to be registered by admin first
 - Login with username/password provided during registration
 
