@@ -138,7 +138,7 @@
           </div>
 
           <div v-else class="content-grid">
-            <!-- Ultra Modern Chart Section -->
+            <!-- Enhanced System Analytics Dashboard -->
             <section class="advanced-chart-panel chart-section">
               <div class="panel-header-advanced">
                 <div class="header-left">
@@ -149,7 +149,6 @@
                     </div>
                     {{ authStore.isAdmin ? 'System Analytics Dashboard' : 'Personal Analytics Hub' }}
                   </h3>
-
                 </div>
                 <div class="panel-controls-advanced">
                   <div class="control-group">
@@ -313,7 +312,7 @@
                   </div>
                 </div>
               </div>
-          </div>
+            </section>
 
           <!-- Weekly Attendance Pattern Panel -->
           <section class="weekly-attendance-panel">
@@ -327,7 +326,6 @@
                   </div>
                   <div class="title-text">
                     <h3 class="panel-title">Weekly Attendance Pattern</h3>
-                    <p class="panel-subtitle">Track your weekly attendance trends</p>
                   </div>
                 </div>
 
@@ -463,6 +461,7 @@
               </div>
             </div>
           </section>
+          </div>
 
           <!-- Performance Insights Panel -->
           <div class="insights-panel">
@@ -1056,7 +1055,6 @@
       </div>
     </div>
   </div>
-
   <!-- Chart Filter Modal -->
   <div v-if="showFilterModal" class="modal-overlay" @click="showFilterModal = false">
     <div class="filter-modal" @click.stop>
@@ -1259,12 +1257,13 @@ const attendanceData = ref<AttendanceRecord[]>([])
 // Enhanced analytics features
 const weeklyViewMode = ref<string>('Percentage')
 const performanceInsights = ref<any>(null)
+const selectedTimeRange = ref<string>('30d')
 
 // Carousel functionality
 const currentSlideIndex = ref<number>(0)
 const slideWidth = ref<number>(100)
 const autoSlideEnabled = ref<boolean>(false)
-const autoSlideInterval = ref<NodeJS.Timeout | null>(null)
+const autoSlideInterval = ref<ReturnType<typeof setInterval> | null>(null)
 const carouselWrapper = ref<HTMLElement | null>(null)
 const carouselTrack = ref<HTMLElement | null>(null)
 
@@ -1536,7 +1535,7 @@ const getClassStatusText = (cls: any) => {
     case 'active': return 'In Progress'
     case 'completed': return 'Completed'
     default: return 'Unknown'
-  }
+}
 }
 
 // Advanced Chart Methods
@@ -2002,17 +2001,19 @@ const toggleAutoSlide = () => {
 }
 
 const startAutoSlide = () => {
-  if (autoSlideInterval.value) clearInterval(autoSlideInterval.value)
-
+  if (autoSlideInterval.value) {
+    clearInterval(autoSlideInterval.value)
+  }
+  
   autoSlideInterval.value = setInterval(() => {
     const maxIndex = slideIndicators.value.length - 1
-    if (currentSlideIndex.value >= maxIndex) {
-      currentSlideIndex.value = 0
-    } else {
+    if (currentSlideIndex.value < maxIndex) {
       currentSlideIndex.value++
+    } else {
+      currentSlideIndex.value = 0
     }
     updateSlideWidth()
-  }, 4000)
+  }, 3000)
 }
 
 const stopAutoSlide = () => {
@@ -2021,6 +2022,70 @@ const stopAutoSlide = () => {
     autoSlideInterval.value = null
   }
 }
+
+// Enhanced Analytics Methods
+const calculateTotalAttendance = () => {
+  if (!attendanceChart.value.length) return 0
+  return attendanceChart.value.reduce((total, item) => total + (getChartValue(item) || 0), 0)
+}
+
+const calculateGrowthRate = () => {
+  if (attendanceChart.value.length < 2) return 0
+  const current = getChartValue(attendanceChart.value[attendanceChart.value.length - 1]) || 0
+  const previous = getChartValue(attendanceChart.value[attendanceChart.value.length - 2]) || 0
+  if (previous === 0) return 0
+  return Math.round(((current - previous) / previous) * 100)
+}
+
+const updateChartData = async () => {
+  analyticsLoading.value = true
+  try {
+    // Simulate API call with time range filter
+    if (authStore.isAdmin) {
+      const response = await adminAPI.getAnalytics()
+      attendanceChart.value = response.data.monthly_trend || []
+    } else {
+      const response = await userAPI.getMyAnalytics()
+      attendanceChart.value = response.data.monthly_trend || []
+    }
+  } catch (error) {
+    console.error('Error updating chart data:', error)
+  } finally {
+    analyticsLoading.value = false
+  }
+}
+
+// Weekly Pattern Helper Methods
+const getDayName = (day: WeeklyPatternDay) => {
+  return day.name || day.day || 'Unknown'
+}
+
+
+// Refresh methods
+const refreshData = async () => {
+  if (authStore.isAdmin) {
+    await loadDashboardData()
+  } else {
+    await loadUserData()
+  }
+}
+
+const refreshActivity = async () => {
+  try {
+    if (authStore.isAdmin) {
+      const response = await adminAPI.getRecentActivity()
+      recentActivity.value = response.data.activities || []
+    } else {
+      const response = await userAPI.getMyAttendance()
+      recentActivity.value = response.data.activities || []
+    }
+  } catch (error) {
+    console.error('Error refreshing activity:', error)
+  }
+}
+
+
+// (Removed duplicate startAutoSlide and stopAutoSlide functions)
 
 // Handle window resize for responsive carousel
 const handleCarouselResize = () => {
@@ -2101,9 +2166,7 @@ const getChartValue = (month: any) => {
 }
 
 // Weekly pattern helper methods
-const getDayName = (day: any) => {
-  return day.day || day.name || 'Unknown'
-}
+
 
 const getDayPercentage = (day: any) => {
   if (weeklyViewMode.value === 'Count') {
@@ -2131,29 +2194,19 @@ const getProgressClass = (percentage: number) => {
 }
 
 // Activity refresh function
-const refreshActivity = async () => {
-  try {
-    if (authStore.isAdmin) {
-      // Reload system analytics for admin
-      const analyticsResponse = await adminAPI.getAnalytics()
-      if (analyticsResponse.data?.recent_system_activity) {
-        recentActivity.value = analyticsResponse.data.recent_system_activity
-      }
-    } else {
-      // Reload user analytics for students
-      const analyticsResponse = await userAPI.getUserAnalytics()
-      if (analyticsResponse.data?.recent_attendance) {
-        recentActivity.value = analyticsResponse.data.recent_attendance.map(item => ({
-          ...item,
-          status: 'present',
-          user_name: authStore.user?.name || 'You'
-        }))
-      }
-    }
-  } catch (error) {
-    console.error('Error refreshing activity:', error)
-  }
+// Define interfaces at the top level
+interface RecentAttendanceItem {
+  date: string
+  time: string
 }
+
+interface RecentActivityRecord extends RecentAttendanceItem {
+  status: 'present'
+  user_name: string
+}
+
+// Duplicate refreshActivity function removed to fix redeclaration error.
+
 
 // User management methods
 const loadUsers = async () => {
@@ -2205,17 +2258,6 @@ const deleteUser = async (user: User) => {
   } catch (error: any) {
     console.error('Error deleting user:', error)
     alert(error.response?.data?.message || 'Error deleting user')
-  }
-}
-
-const refreshData = async () => {
-  if (authStore.isAdmin) {
-    await Promise.all([
-      loadDashboardData(),
-      loadUsers()
-    ])
-  } else {
-    await loadUserData()
   }
 }
 
